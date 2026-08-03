@@ -1,0 +1,8 @@
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Gemini IDE & Workspace Agent configurations
+.gemini/
+.agents/
+*.log

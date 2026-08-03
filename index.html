@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineWire - Global Movie & Series News</title>
+  <!-- Google Fonts: Inter & Playfair Display for cinematic branding -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- App Shell -->
+  <div class="app-layout">
+    
+    <!-- 0. Login Screen Modal Overlay -->
+    <div class="modal-backdrop active" id="login-modal-backdrop">
+      <div class="login-modal-card">
+        <div class="login-modal-header">
+          <div class="logo">Cine<span>Wire</span></div>
+          <p class="subtext">Step into the cinematic world</p>
+        </div>
+        
+        <div class="social-login-group">
+          <button id="btn-login-google" class="btn-social google">
+            <span class="social-logo-img">🌐</span> Continue with Google
+          </button>
+          <button id="btn-login-facebook" class="btn-social facebook">
+            <span class="social-logo-img">📘</span> Continue with Facebook
+          </button>
+          <button id="btn-login-x" class="btn-social x-twitter">
+            <span class="social-logo-img">𝕏</span> Continue with X (Twitter)
+          </button>
+        </div>
+
+        <div class="divider-text"><span>or sign in with email</span></div>
+
+        <form id="email-login-form" class="email-login-form">
+          <div class="input-field-group">
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" placeholder="name@domain.com" required>
+          </div>
+          <div class="input-field-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 8px;">Sign In</button>
+        </form>
+
+        <div class="login-modal-footer">
+          <button id="btn-login-guest" class="btn-link">Continue as Guest</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 1. Navigation Bar -->
+    <header class="app-navbar">
+      <div class="nav-left">
+        <div class="logo" id="logo-home">Cine<span>Wire</span></div>
+      </div>
+      
+      <div class="nav-center">
+        <div class="global-search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="global-search" placeholder="Search movies, series, news, reviews...">
+          <button id="global-search-clear" class="btn-clear hidden">&times;</button>
+        </div>
+      </div>
+      
+      <div class="nav-right">
+        <!-- Persistent Country Switcher Pill -->
+        <button id="nav-country-switcher" class="nav-country-pill">
+          <span id="active-country-flag">🌐</span>
+          <span id="active-country-name">Global</span>
+          <span class="chevron">▾</span>
+        </button>
+        
+        <!-- Bookmarks Trigger -->
+        <button id="btn-bookmarks-toggle" class="btn-nav-action" title="Saved Bookmarks">
+          <span class="icon">🔖</span>
+          <span class="badge" id="bookmarks-badge">0</span>
+        </button>
+
+        <!-- Onboarding Reset Action -->
+        <button id="btn-onboarding-reset" class="btn-nav-action" title="Onboarding Wizard">
+          <span class="icon">⚙️</span>
+        </button>
+
+        <!-- Sign Out / User Avatar Action -->
+        <button id="btn-signout" class="btn-nav-action hidden" title="Sign Out">
+          <span id="nav-user-avatar-char" style="font-weight: 800; color: var(--accent-gold);">U</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. Onboarding Modal Overlay (Wizard Mode) -->
+    <div class="modal-backdrop" id="onboarding-modal-backdrop">
+      <div class="onboarding-modal-card">
+        <div class="onboarding-modal-header">
+          <h1>Choose your regions</h1>
+          <p class="subtext">Follow the countries whose film & series news you care about the most.</p>
+        </div>
+        
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="onboarding-search" class="search-input" placeholder="Search countries...">
+          <button id="onboarding-search-clear" class="btn-clear hidden">&times;</button>
+        </div>
+        
+        <div class="onboarding-list-wrapper">
+          <!-- Pinned Global Option -->
+          <div class="country-row pinned-row" id="onboarding-country-global" data-code="GL">
+            <div class="flag-icon">🌐</div>
+            <div class="country-name">Global — all countries</div>
+            <div class="select-indicator"></div>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <!-- Scroll List of Countries -->
+          <div class="countries-scroll-list" id="onboarding-list">
+            <!-- Dynamic country checkboxes -->
+          </div>
+          
+          <!-- Empty State in Search -->
+          <div id="onboarding-empty" class="list-empty hidden">
+            <div class="empty-emoji">🍿</div>
+            <p>No countries match your search</p>
+          </div>
+        </div>
+        
+        <div class="onboarding-modal-footer">
+          <button id="btn-continue" class="btn-primary" disabled>Continue</button>
+          <button id="link-skip" class="btn-link">Skip — I'll choose later</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Main Dashboard Content -->
+    <main class="main-content">
+      
+      <!-- Left side: Core News Hub -->
+      <section class="news-hub">
+        
+        <!-- Hero Featured Billboard (Dynamic headline) -->
+        <div class="hero-billboard" id="hero-billboard">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Feed Control Strip -->
+        <div class="feed-control-strip">
+          <div class="feed-tabs">
+            <button class="feed-tab active">Latest News</button>
+            <button class="feed-tab">Trending</button>
+            <button class="feed-tab">Reviews</button>
+            <button class="feed-tab">Upcoming Releases</button>
+          </div>
+          <div class="feed-active-indicator" id="feed-active-indicator-bar">
+            Showing news for: <strong id="feed-region-label">Global</strong>
+          </div>
+        </div>
+
+        <!-- News Article Grid Layout -->
+        <div class="articles-grid-container">
+          
+          <!-- Loading skeleton (Pulse) -->
+          <div id="feed-skeletons" class="grid-state-wrapper hidden">
+            <div class="skeleton-card">
+              <div class="skeleton-image pulse"></div>
+              <div class="skeleton-content">
+                <div class="skeleton-pill pulse"></div>
+                <div class="skeleton-title pulse"></div>
+                <div class="skeleton-text pulse"></div>
+                <div class="skeleton-meta pulse"></div>
+              </div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-image pulse"></div>
+              <div class="skeleton-content">
+                <div class="skeleton-pill pulse"></div>
+                <div class="skeleton-title pulse"></div>
+                <div class="skeleton-text pulse"></div>
+                <div class="skeleton-meta pulse"></div>
+              </div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-image pulse"></div>
+              <div class="skeleton-content">
+                <div class="skeleton-pill pulse"></div>
+                <div class="skeleton-title pulse"></div>
+                <div class="skeleton-text pulse"></div>
+                <div class="skeleton-meta pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State (e.g. Australia/Iceland) -->
+          <div id="feed-empty" class="grid-state-wrapper hidden">
+            <div class="empty-state-card">
+              <div class="empty-cinema-graphic">🎬</div>
+              <h2 id="empty-state-title">No new articles available</h2>
+              <p id="empty-state-message">Check back soon for cinema & series updates or switch to a different region.</p>
+              <button id="btn-empty-switch" class="btn-primary-small">Change Region</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Articles Grid -->
+          <div id="articles-grid" class="articles-grid">
+            <!-- Dynamic news card items -->
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- Right side: Collapsible Bookmarks Sidebar Drawer -->
+      <aside class="bookmarks-drawer" id="bookmarks-drawer">
+        <div class="drawer-header">
+          <h3>Saved Bookmarks</h3>
+          <button id="btn-close-drawer" class="btn-close-icon">&times;</button>
+        </div>
+        <div class="drawer-content" id="bookmarks-list">
+          <!-- Bookmarks list items -->
+          <div class="bookmarks-empty-placeholder" id="bookmarks-empty">
+            <span class="icon">🔖</span>
+            <p>No saved articles yet.<br>Click the bookmark icon on any card to save it here.</p>
+          </div>
+        </div>
+      </aside>
+
+    </main>
+
+    <!-- 4. Global Switcher Bottom Sheet Dialog (Modal format for web) -->
+    <div class="modal-backdrop" id="switcher-modal-backdrop">
+      <div class="switcher-modal">
+        <div class="switcher-modal-header">
+          <h2>Select Active Region</h2>
+          <button id="btn-close-switcher" class="btn-close-icon">&times;</button>
+        </div>
+        
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="switcher-search" class="search-input" placeholder="Search regions...">
+          <button id="switcher-search-clear" class="btn-clear hidden">&times;</button>
+        </div>
+        
+        <div class="switcher-content">
+          <!-- Pinned Global Row -->
+          <div class="switcher-country-row" id="switcher-country-global" data-code="GL">
+            <span class="flag-icon">🌐</span>
+            <span class="country-name">Global — all countries</span>
+            <span class="active-dot hidden">●</span>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <!-- Followed Countries list -->
+          <div class="switcher-section-header">
+            <span>YOUR FOLLOWED REGIONS</span>
+            <button class="btn-add-region-plus" id="btn-switcher-add-region" title="Focus search to add regions">+</button>
+          </div>
+          <div class="switcher-list" id="switcher-followed-list">
+            <!-- Populated dynamically -->
+          </div>
+          
+          <div class="divider"></div>
+          
+          <!-- All Countries list -->
+          <div class="switcher-section-header">
+            <span>ALL COUNTRIES</span>
+          </div>
+          <div class="switcher-list" id="switcher-all-list">
+            <!-- Populated dynamically -->
+          </div>
+          
+          <div id="switcher-empty" class="list-empty hidden">
+            <div class="empty-emoji">🍿</div>
+            <p>No countries match your search</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Interactive Article Details Modal -->
+    <div class="modal-backdrop" id="details-modal-backdrop">
+      <div class="details-modal">
+        <!-- Close Button -->
+        <button id="btn-close-details" class="btn-close-details">&times;</button>
+        
+        <!-- Large Backdrop Image Area -->
+        <div class="details-hero" id="details-hero-img">
+          <div class="details-hero-gradient"></div>
+          <span class="details-category" id="details-category-tag">Festival</span>
+        </div>
+
+        <div class="details-body-wrapper">
+          <!-- Left side: Article Text -->
+          <div class="details-article-content">
+            <h1 class="details-title" id="details-title-text">Cannes Film Festival 2026 Details</h1>
+            
+            <div class="details-meta">
+              <div class="author-info">
+                <div class="author-avatar" id="details-author-avatar">E</div>
+                <div>
+                  <div class="author-name" id="details-author-name">Elena Rostova</div>
+                  <div class="publish-date" id="details-publish-time">2 hours ago • 5 min read</div>
+                </div>
+              </div>
+              <button id="btn-details-bookmark" class="btn-details-save">
+                <span class="save-icon">🔖</span> Save Article
+              </button>
+            </div>
+
+            <div class="details-paragraphs" id="details-paragraphs">
+              <!-- Paragraph content injected dynamically -->
+            </div>
+
+            <!-- Dynamic Comments Area -->
+            <div class="details-comments-section">
+              <h3>Discussion (<span id="comments-count">2</span>)</h3>
+              
+              <div class="comments-list" id="details-comments-list">
+                <!-- Dynamically updated comments -->
+              </div>
+              
+              <form class="comment-input-form" id="comment-form">
+                <input type="text" id="input-comment-text" placeholder="Share your thoughts on this story..." required>
+                <button type="submit" class="btn-primary-small">Post</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right side: Featured Media/Movie Metadata Card -->
+          <div class="details-sidebar-card">
+            <div class="movie-card-header">FEATURED MOVIE</div>
+            <div class="movie-metadata-card" id="details-movie-card">
+              <!-- Dynamically populated movie info -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Collapsible Developer Handoff / State panel -->
+    <div class="dev-panel-container" id="dev-panel-container">
+      <button class="dev-panel-toggle" id="btn-dev-toggle">
+        <span class="icon">⚙️</span> State Monitor & Developer Handoff
+      </button>
+      
+      <div class="dev-panel-body">
+        <div class="dev-layout">
+          <!-- Left Side: Simulator Controls & JSON -->
+          <div class="dev-col-left">
+            <div class="dev-control-group">
+              <h4>State Override Controllers</h4>
+              <div class="btn-group" style="margin-bottom: 6px;">
+                <button id="sim-btn-loading" class="btn-debug">Force Skeleton Screen</button>
+                <button id="sim-btn-empty" class="btn-debug">Force Empty Feed</button>
+                <button id="sim-btn-success" class="btn-debug">Force Success Feed</button>
+              </div>
+              <div class="btn-group" style="margin-bottom: 8px;">
+                <button id="sim-btn-login" class="btn-debug">Simulate Login</button>
+                <button id="sim-btn-logout" class="btn-debug">Simulate Logout</button>
+              </div>
+              <label class="checkbox-container">
+                <input type="checkbox" id="sim-network-delay" checked>
+                <span>Simulate network latency (1.2s on cache misses)</span>
+              </label>
+            </div>
+            
+            <div class="dev-control-group">
+              <h4>Zustand State (`useRegionStore`)</h4>
+              <pre><code id="zustand-state-json">{}</code></pre>
+            </div>
+          </div>
+          
+          <!-- Center: Cache monitor -->
+          <div class="dev-col-center">
+            <h4>React Query QueryCache Monitor</h4>
+            <p class="cache-desc">Toggle regions. In-memory queries are cached independently. Cache-hits render immediately without loading skeletons.</p>
+            <div class="query-cache-list" id="query-cache-list">
+              <!-- Dynamic keys -->
+            </div>
+          </div>
+          
+          <!-- Right: Code blocks -->
+          <div class="dev-col-right">
+            <div class="dev-code-tabs">
+              <button class="dev-tab active" data-dev-tab="dev-tab-zustand">Zustand Hook</button>
+              <button class="dev-tab" data-dev-tab="dev-tab-query">React Query Hook</button>
+            </div>
+            
+            <div class="dev-tab-content active" id="dev-tab-zustand">
+              <pre><code>// store/useRegionStore.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+export const useRegionStore = create()(
+  persist((set) => ({
+    followedCountries: [],
+    activeCountry: 'GL',
+    follow: (c) => set(s => ({ followedCountries: [...s.followedCountries, c] })),
+    unfollow: (c) => set(s => ({ followedCountries: s.followedCountries.filter(x => x !== c) })),
+    setActive: (c) => set({ activeCountry: c })
+  }), { name: 'cinewire-regions' })
+);</code></pre>
+            </div>
+            <div class="dev-tab-content" id="dev-tab-query">
+              <pre><code>// hooks/useMovieNews.ts
+import { useQuery } from '@tanstack/react-query';
+
+export function useMovieNews(country) {
+  return useQuery({
+    queryKey: ['movieNews', country],
+    queryFn: () => fetchNews(country),
+    staleTime: 5 * 60 * 1000 // 5 minutes cache
+  });
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
