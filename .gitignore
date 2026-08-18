@@ -6,3 +6,12 @@ Thumbs.db
 .gemini/
 .agents/
 *.log
+node_modules/
+.env
+cinewire.db
+cinewire.db-shm
+cinewire.db-wal
+*.backup
+*.bak2
+app_original_test.js
+test_endpoints.js

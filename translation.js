@@ -541,6 +541,8 @@ function translatePage() {
   // Reload dynamic content if functions are available
   if (typeof loadFeed === 'function') loadFeed();
   if (typeof syncUI === 'function') syncUI();
+  if (typeof buildTicker === 'function') buildTicker();
+  if (typeof buildStreaming === 'function') buildStreaming();
 }
 
 /* ============================================================

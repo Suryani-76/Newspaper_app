@@ -6,6 +6,86 @@ const $  = id  => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
 
 /* ============================================================
+   API LAYER — All 13 endpoints wired to real backend
+   ============================================================ */
+const API_BASE = 'http://localhost:3001/api';
+
+// Get stored auth token
+function getToken() { return localStorage.getItem('cw_token') || ''; }
+function setToken(t) { localStorage.setItem('cw_token', t); }
+function clearToken() { localStorage.removeItem('cw_token'); }
+
+// Base fetch with auth header
+async function apiFetch(path, options = {}) {
+  const token = getToken();
+  const res = await fetch(API_BASE + path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'API error');
+  return data;
+}
+
+// ── News APIs ──
+const API = {
+  // GET /api/news/trending
+  getTrending: () => apiFetch('/news/trending'),
+
+  // GET /api/news/latest?page=1&limit=6&region=GL
+  getLatest: (page = 1, limit = 6, region = 'GL') =>
+    apiFetch(`/news/latest?page=${page}&limit=${limit}&region=${region}`),
+
+  // GET /api/news/category/:category
+  getCategory: (category, page = 1) =>
+    apiFetch(`/news/category/${encodeURIComponent(category)}?page=${page}`),
+
+  // GET /api/news/search?q=query&filter=all&sort=latest
+  search: (q, filter = 'all', sort = 'latest') =>
+    apiFetch(`/news/search?q=${encodeURIComponent(q)}&filter=${filter}&sort=${sort}`),
+
+  // GET /api/news/:id
+  getArticle: (id) => apiFetch(`/news/${id}`),
+
+  // POST /api/auth/register
+  register: (name, email, password) =>
+    apiFetch('/auth/register', { method: 'POST', body: { name, email, password } }),
+
+  // POST /api/auth/login
+  login: (email, password) =>
+    apiFetch('/auth/login', { method: 'POST', body: { email, password } }),
+
+  // GET /api/auth/me
+  getMe: () => apiFetch('/auth/me'),
+
+  // GET /api/preferences
+  getPrefs: () => apiFetch('/preferences'),
+
+  // PUT /api/preferences
+  updatePrefs: (prefs) =>
+    apiFetch('/preferences', { method: 'PUT', body: prefs }),
+
+  // GET /api/bookmarks
+  getBookmarks: () => apiFetch('/bookmarks'),
+
+  // POST /api/bookmarks/:id
+  saveBookmark: (id) =>
+    apiFetch(`/bookmarks/${id}`, { method: 'POST' }),
+
+  // DELETE /api/bookmarks/:id
+  removeBookmark: (id) =>
+    apiFetch(`/bookmarks/${id}`, { method: 'DELETE' }),
+};
+/* ============================================================
+   END API LAYER
+   ============================================================ */
+
+/* ============================================================
    DATA
    ============================================================ */
 const COUNTRIES = [
@@ -39,12 +119,32 @@ const NOTIFICATIONS = [
 ];
 
 const STREAMING = [
-  {title:'Neon Horizon: Legacy', platform:'Prime Video',genre:'Sci-Fi', grad:'article-bg-grad-2',img:'https://picsum.photos/id/450/600/340'},
-  {title:'Quiet Echoes',         platform:'Apple TV+',  genre:'Drama',  grad:'article-bg-grad-3',img:'https://picsum.photos/id/1045/600/340'},
-  {title:'Squid Game S3',        platform:'Netflix',    genre:'Thriller',grad:'article-bg-grad-4',img:'https://picsum.photos/id/1062/600/340'},
-  {title:'Parisian Rhapsody',    platform:'Mubi',       genre:'Romance',grad:'article-bg-grad-3',img:'https://picsum.photos/id/318/600/340'},
-  {title:'The Subterrene Epoch', platform:'Disney+',    genre:'Sci-Fi', grad:'article-bg-grad-6',img:'https://picsum.photos/id/1080/600/340'},
-  {title:'Anatomy of a Whisper', platform:'Netflix',    genre:'Drama',  grad:'article-bg-grad-1',img:'https://picsum.photos/id/1067/600/340'},
+  // Netflix
+  {title:'Squid Game S3',           platform:'Netflix',    genre:'Thriller · Drama',  year:'2025', rating:'9.0', grad:'article-bg-grad-4', img:'https://image.tmdb.org/t/p/w780/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg'},
+  {title:'The Witcher: Season 4',   platform:'Netflix',    genre:'Fantasy · Action',  year:'2025', rating:'7.8', grad:'article-bg-grad-3', img:'https://image.tmdb.org/t/p/w780/cZ0d3rtvXPVvAGCfoQmFullHspa.jpg'},
+  {title:'Stranger Things S5',      platform:'Netflix',    genre:'Sci-Fi · Horror',   year:'2025', rating:'8.7', grad:'article-bg-grad-1', img:'https://image.tmdb.org/t/p/w780/49WJfeN0moxb9IPfGn8AIqMGskD.jpg'},
+  {title:'Black Mirror S7',         platform:'Netflix',    genre:'Sci-Fi · Thriller', year:'2025', rating:'7.9', grad:'article-bg-grad-2', img:'https://image.tmdb.org/t/p/w780/7PRddO7z7mcPi21nZTCMGShAyy1.jpg'},
+  {title:'Wednesday S2',            platform:'Netflix',    genre:'Comedy · Mystery',  year:'2025', rating:'8.1', grad:'article-bg-grad-6', img:'https://image.tmdb.org/t/p/w780/jeGtaMwGxPmQN5xM4ClnwPQcNQz.jpg'},
+  // Prime Video
+  {title:'Fallout S2',              platform:'Prime Video',genre:'Sci-Fi · Action',   year:'2025', rating:'8.5', grad:'article-bg-grad-5', img:'https://image.tmdb.org/t/p/w780/rGfGfgL2pEPCfhIvqHXieXFn7gp.jpg'},
+  {title:'The Boys S5',             platform:'Prime Video',genre:'Superhero · Satire',year:'2025', rating:'8.8', grad:'article-bg-grad-1', img:'https://image.tmdb.org/t/p/w780/stTEycfG9928HYGEISBFaG1ngjM.jpg'},
+  {title:'Rings of Power S3',       platform:'Prime Video',genre:'Fantasy · Epic',    year:'2025', rating:'7.2', grad:'article-bg-grad-3', img:'https://image.tmdb.org/t/p/w780/mYLOqiStMxDK3fYZFirgrMt8z5d.jpg'},
+  {title:'Reacher S3',              platform:'Prime Video',genre:'Action · Thriller', year:'2025', rating:'8.0', grad:'article-bg-grad-2', img:'https://image.tmdb.org/t/p/w780/rGfGfgL2pEPCfhIvqHXieXFn7gp.jpg'},
+  // Disney+
+  {title:'Andor S2',                platform:'Disney+',    genre:'Sci-Fi · Drama',    year:'2025', rating:'8.9', grad:'article-bg-grad-2', img:'https://image.tmdb.org/t/p/w780/59SVNwLfoMnZPPB6ukW6dlPxAdI.jpg'},
+  {title:'Agatha All Along',        platform:'Disney+',    genre:'Superhero · Mystery',year:'2025',rating:'7.8', grad:'article-bg-grad-6', img:'https://image.tmdb.org/t/p/w780/jBtYB9vtX7OLcRFMTmyMFq2WiCN.jpg'},
+  {title:'Skeleton Crew',           platform:'Disney+',    genre:'Sci-Fi · Adventure',year:'2025',rating:'7.5', grad:'article-bg-grad-4', img:'https://image.tmdb.org/t/p/w780/59SVNwLfoMnZPPB6ukW6dlPxAdI.jpg'},
+  // Apple TV+
+  {title:'Severance S3',            platform:'Apple TV+',  genre:'Sci-Fi · Thriller', year:'2025', rating:'9.1', grad:'article-bg-grad-3', img:'https://image.tmdb.org/t/p/w780/lm3pQ2QoQ9mBiGlEGdCe3oYBqrN.jpg'},
+  {title:'Silo S3',                 platform:'Apple TV+',  genre:'Sci-Fi · Drama',    year:'2025', rating:'8.3', grad:'article-bg-grad-4', img:'https://image.tmdb.org/t/p/w780/7VOEGZXsOKBYsdWRFsFh1HJRMEI.jpg'},
+  {title:'Presumed Innocent S2',    platform:'Apple TV+',  genre:'Legal · Thriller',  year:'2025', rating:'7.6', grad:'article-bg-grad-1', img:'https://image.tmdb.org/t/p/w780/lm3pQ2QoQ9mBiGlEGdCe3oYBqrN.jpg'},
+  // Max / HBO
+  {title:'House of the Dragon S3',  platform:'Max',        genre:'Fantasy · Drama',   year:'2025', rating:'8.6', grad:'article-bg-grad-1', img:'https://image.tmdb.org/t/p/w780/z2yahl2uefxDCl0nogcRBstwruJ.jpg'},
+  {title:'The Last of Us S3',       platform:'Max',        genre:'Drama · Horror',    year:'2025', rating:'9.0', grad:'article-bg-grad-3', img:'https://image.tmdb.org/t/p/w780/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg'},
+  {title:'Euphoria S3',             platform:'Max',        genre:'Drama · Teen',      year:'2025', rating:'8.4', grad:'article-bg-grad-6', img:'https://image.tmdb.org/t/p/w780/3Q0hd3heuWwDWpwcDkhQOA6TYWI.jpg'},
+  // Mubi / Indie
+  {title:'All We Imagine as Light', platform:'Mubi',       genre:'Drama · Arthouse',  year:'2024', rating:'8.1', grad:'article-bg-grad-3', img:'https://image.tmdb.org/t/p/w780/rGfGfgL2pEPCfhIvqHXieXFn7gp.jpg'},
+  {title:'The Substance',           platform:'Mubi',       genre:'Horror · Satire',   year:'2024', rating:'7.0', grad:'article-bg-grad-5', img:'https://image.tmdb.org/t/p/w780/lqoMzCcZYEFK729d6qzt349fB4o.jpg'},
 ];
 
 const CATEGORIES = ['All','Horror','Sci-Fi','Thriller','Action','Comedy','Drama','Romance','Fantasy','Crime','Mystery','Animation'];
@@ -200,7 +300,7 @@ const ARTICLES = [
    comments:[{id:'c10',user:'RRRFan',avatar:'R',verified:false,text:'RRR proved Rajamouli can sell Indian cinema globally.',time:'40 min ago',likes:932,replies:[]}]},
 
   {id:'gb-1',region:'GB',category:'Casting',badge:'EXCLUSIVE',tab:'latest',criticScore:0,audienceScore:0,readTimeMins:4,trailerUrl:false,
-   grad:'article-bg-grad-1',img:'https://picsum.photos/id/325/1400/700',
+   grad:'article-bg-grad-1',img:'https://picsum.photos/id/20/1400/700',
    title:"Bond 26: Final Screen Tests Underway — Three Actors in Contention for 007",
    dek:"Sources inside Pinewood confirm the producer team has shortlisted three British actors.",
    body:["EON Productions has narrowed the field to three British actors currently in final screen tests.","<blockquote>This is perhaps the most consequential casting decision in franchise cinema history. We will get it right.</blockquote>"],
@@ -253,7 +353,7 @@ const safeParse = (key, fallback) => {
 };
 
 const STATE = {
-  theme:           localStorage.getItem('cw_theme')   || 'light',
+  theme:           localStorage.getItem('cw_theme')   || 'dark',
   activeRegion:    localStorage.getItem('cw_region')  || 'GL',
   followedRegions: safeParse('cw_followed', ['GL']),
   bookmarks:       safeParse('cw_bookmarks', []),
@@ -325,9 +425,10 @@ function log(type,msg) {
 }
 
 function toast(msg,type='info') {
+  const icons={success:'✓',error:'✕',info:'ℹ'};
   const c=$('toast-container'),el=document.createElement('div');
   el.className='toast '+type;
-  el.innerHTML=`<span class="toast-txt">${msg}</span>`;
+  el.innerHTML=`<span class="toast-icon">${icons[type]||'ℹ'}</span><span class="toast-txt">${msg}</span>`;
   c.appendChild(el);
   setTimeout(()=>{el.classList.add('removing');el.addEventListener('animationend',()=>el.remove(),{once:true});},3000);
 }
@@ -411,11 +512,19 @@ $('btn-gs-facebook').addEventListener('click', () => {
 });
 
 // AUTH: Sign in form
-$('signin-form').addEventListener('submit', e => {
+$('signin-form').addEventListener('submit', async e => {
   e.preventDefault();
   const email = $('signin-email').value.trim();
+  const password = $('signin-password').value;
   const name  = email.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-  pendingAuth = {name, email, provider:'Email'};
+  // Try real API login
+  try {
+    const res = await API.login(email, password);
+    setToken(res.token);
+    pendingAuth = {name: res.user.name, email: res.user.email, provider:'Email'};
+  } catch(e) {
+    pendingAuth = {name, email, provider:'Email'};
+  }
   $('auth-screen').classList.add('hidden');
   $('otp-screen').classList.remove('hidden');
   $('otp-sub-text').textContent = `We sent a 6-digit code to ${email}`;
@@ -423,14 +532,25 @@ $('signin-form').addEventListener('submit', e => {
 });
 
 // AUTH: Register form
-$('register-form').addEventListener('submit', e => {
+$('register-form').addEventListener('submit', async e => {
   e.preventDefault();
   const pw  = $('reg-password').value;
   const cpw = $('reg-confirm').value;
   if(pw !== cpw) { toast('Passwords do not match', 'error'); return; }
   const name  = $('reg-name').value.trim();
   const email = $('reg-email').value.trim();
-  pendingAuth = {name, email, provider:'Email', isNew:true};
+  // Try real API register
+  try {
+    const res = await API.register(name, email, pw);
+    setToken(res.token);
+    pendingAuth = {name: res.user.name, email: res.user.email, provider:'Email', isNew:true};
+  } catch(err) {
+    if(err.message === 'Email already registered') {
+      toast('Email already registered. Please sign in.', 'error');
+      return;
+    }
+    pendingAuth = {name, email, provider:'Email', isNew:true};
+  }
   $('auth-screen').classList.add('hidden');
   $('otp-screen').classList.remove('hidden');
   $('otp-sub-text').textContent = `We sent a 6-digit code to ${email}`;
@@ -520,6 +640,12 @@ function finishLogin() {
   flowShowDashboard();
   toast(`Welcome, ${STATE.user.name}! 🎬`, 'success');
   log('auth', 'Flow login: ' + STATE.user.provider);
+  setTimeout(()=>{
+    if('Notification' in window&&Notification.permission==='default'){
+      toast('🔔 Enable notifications for breaking news?','info');
+      Notification.requestPermission().then(p=>{if(p==='granted')toast('Notifications enabled!','success');});
+    }
+  },2500);
 }
 /* ============================================================
    END ONBOARDING FLOW
@@ -620,6 +746,7 @@ function syncUI() {
 
   // Sync feed tabs active state
   $$('.feed-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab===STATE.activeTab));
+  syncBottomNav(t2s[STATE.activeTab] || 'home');
 }
 
 /* ============================================================
@@ -652,6 +779,8 @@ function buildHero() {
   if(!pool.length) return;
   heroSlidesEl.innerHTML = '';
   heroDotsEl.innerHTML = '';
+  // Cache hero articles
+  pool.forEach(a => { if (!ARTICLE_MAP[a.id]) ARTICLE_MAP[a.id] = a; });
   pool.forEach((a,i) => {
     const s = document.createElement('div');
     s.className = 'hero-slide' + (i===0?' active':'');
@@ -728,6 +857,7 @@ $('hero-pause').addEventListener('click', () => {
    ============================================================ */
 function buildCategoryChips() {
   const container = $('category-chips');
+  if (!container) return;
   container.innerHTML = CATEGORIES.map(cat => `
     <button class="cat-chip${STATE.activeCategory===cat?' active':''}" data-cat="${cat}">${cat}</button>
   `).join('');
@@ -740,28 +870,6 @@ function buildCategoryChips() {
       log('nav','Category: '+STATE.activeCategory);
       // Scroll to feed
       $('feed-section').scrollIntoView({behavior:'smooth',block:'start'});
-    });
-  });
-}
-
-/* ============================================================
-   LANGUAGE SECTION
-   ============================================================ */
-function buildLanguageSection() {
-  const container = $('language-btns');
-  container.innerHTML = LANGUAGES.map(l => `
-    <button class="lang-btn" data-lang="${l.code}">
-      <span class="lang-flag">${l.flag}</span>
-      <span>${l.name}</span>
-    </button>
-  `).join('');
-  container.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      container.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const lang = LANGUAGES.find(l => l.code === btn.dataset.lang);
-      toast(`Showing ${lang.name} content`, 'success');
-      log('nav','Language: '+lang.name);
     });
   });
 }
@@ -790,16 +898,56 @@ const ITEMS_PER_PAGE = 6;
 const grid = $('articles-grid');
 
 function loadFeed(append=false) {
-  if(!append) { STATE.feedPage=1; renderSkel(); if(STATE.activeTab==='latest') buildHero(); }
+  if(!append) { STATE.feedPage=1; _loadingMore=false; renderSkel(); if(STATE.activeTab==='latest') buildHero(); }
   const key = `feed_${STATE.activeRegion}_${STATE.activeTab}_${STATE.activeSort}_${STATE.activeCategory}_${STATE.feedPage}`;
-  simFetch(key, () => filteredArticles())
-    .then(arts => {
+
+  // Try real API first, fall back to local data
+  const fetchData = async () => {
+    try {
+      if (STATE.activeTab === 'trending') {
+        const res = await API.getTrending();
+        return { data: res.data, total: res.count, fromApi: true };
+      } else if (STATE.activeCategory !== 'All') {
+        const catQuery = GENRE_QUERY_MAP[STATE.activeCategory] || STATE.activeCategory;
+        const res = await API.getCategory(catQuery, STATE.feedPage);
+        return { data: res.data, total: res.total, fromApi: true };
+      } else {
+        const res = await API.getLatest(STATE.feedPage, 6, STATE.activeRegion);
+        return { data: res.data, total: res.total, fromApi: true };
+      }
+    } catch(e) {
+      // API unavailable - use local data
+      const all = filteredArticles();
+      return { data: all, total: all.length, fromApi: false };
+    }
+  };
+
+  fetchData()
+    .then(({ data: arts, total, fromApi }) => {
       if(!append) { grid.innerHTML=''; log('nav',`Feed: tab=${STATE.activeTab} region=${STATE.activeRegion}`); }
-      const start = (STATE.feedPage-1)*ITEMS_PER_PAGE;
-      const page  = arts.slice(start, start+ITEMS_PER_PAGE);
-      if(!append && !arts.length) { renderEmpty(); updateLoadMore(false); return; }
-      page.forEach((a,i) => { grid.appendChild(buildCard(a, append?i+99:i)); });
-      updateLoadMore(arts.length > start+ITEMS_PER_PAGE);
+      let page;
+      if (fromApi) {
+        page = arts;
+      } else {
+        const start = (STATE.feedPage-1)*ITEMS_PER_PAGE;
+        page = arts.slice(start, start+ITEMS_PER_PAGE);
+      }
+      if(!append && !page.length) { renderEmpty(); updateLoadMore(false); return; }
+      page.forEach((a,i) => {
+        // Cache every fetched article so openArticle can find it
+        if (!ARTICLE_MAP[a.id]) ARTICLE_MAP[a.id] = a;
+        grid.appendChild(buildCard(a, append?i+99:i));
+      });
+      // Magazine layout: first-load, grid view, latest or trending tab, not appending
+      if(!append && STATE.viewMode==='grid' && (STATE.activeTab==='latest'||STATE.activeTab==='trending')) {
+        grid.classList.add('magazine-layout');
+      } else if(!append) {
+        grid.classList.remove('magazine-layout');
+      }
+      const hasMore = fromApi
+        ? page.length >= ITEMS_PER_PAGE
+        : arts.length > (STATE.feedPage-1)*ITEMS_PER_PAGE + ITEMS_PER_PAGE;
+      updateLoadMore(hasMore);
     })
     .catch(() => { if(!append) renderErr(); toast('Failed to load articles','error'); });
 }
@@ -808,18 +956,56 @@ function updateLoadMore(show) { $('load-more-wrap').classList.toggle('hidden',!s
 
 function renderSkel() {
   grid.innerHTML = '';
-  for(let i=0;i<6;i++) {
+  const count = STATE.viewMode === 'list' ? 4 : 6;
+  for(let i = 0; i < count; i++) {
     const s = document.createElement('div');
     s.className = 'skel-card';
-    s.innerHTML = '<div class="skel-thumb skeleton"></div><div class="skel-body"><div class="skel-line w9 skeleton"></div><div class="skel-line w7 skeleton"></div><div class="skel-line w5 skeleton"></div></div>';
+    if(STATE.viewMode === 'list') {
+      s.innerHTML = `<div style="display:flex;max-height:140px;overflow:hidden;">
+        <div class="skel-thumb skeleton" style="width:180px;flex-shrink:0;height:140px;border-radius:0;"></div>
+        <div class="skel-body" style="flex:1;">
+          <div class="skeleton" style="width:48px;height:16px;border-radius:4px;margin-bottom:10px;"></div>
+          <div class="skeleton" style="width:90%;height:14px;border-radius:3px;margin-bottom:6px;"></div>
+          <div class="skeleton" style="width:70%;height:14px;border-radius:3px;margin-bottom:auto;"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+            <div class="skeleton" style="width:60px;height:10px;border-radius:3px;"></div>
+            <div class="skeleton" style="width:56px;height:24px;border-radius:6px;"></div>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      s.innerHTML = `
+        <div class="skel-thumb skeleton"></div>
+        <div class="skel-body">
+          <div class="skeleton" style="width:52px;height:17px;border-radius:4px;margin-bottom:10px;"></div>
+          <div class="skeleton" style="width:92%;height:14px;border-radius:3px;margin-bottom:6px;"></div>
+          <div class="skeleton" style="width:75%;height:14px;border-radius:3px;margin-bottom:10px;"></div>
+          <div class="skeleton" style="width:100%;height:11px;border-radius:3px;margin-bottom:4px;"></div>
+          <div class="skeleton" style="width:82%;height:11px;border-radius:3px;margin-bottom:14px;"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div class="skeleton" style="width:18px;height:18px;border-radius:50%;"></div>
+              <div class="skeleton" style="width:64px;height:10px;border-radius:3px;"></div>
+            </div>
+            <div class="skeleton" style="width:64px;height:26px;border-radius:6px;"></div>
+          </div>
+        </div>`;
+    }
     grid.appendChild(s);
   }
 }
 
 function renderEmpty() {
-  grid.innerHTML = `<div class="feed-empty">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
-    <h3>No articles found</h3><p>Try a different filter or region.</p>
+  const msgs={
+    latest:{emoji:'🎬',title:'No stories yet',sub:'The projector is warming up. Check back soon.'},
+    trending:{emoji:'📈',title:'Nothing trending yet',sub:'Be the first to read something today.'},
+    reviews:{emoji:'⭐',title:'No reviews found',sub:'Critics are still sharpening their pencils.'},
+    boxoffice:{emoji:'🎟️',title:'Box office is empty',sub:'Films are in production. Stay tuned.'},
+  };
+  const m=msgs[STATE.activeTab]||{emoji:'🎞️',title:'No films found',sub:'Try a different genre or region.'};
+  grid.innerHTML=`<div class="feed-empty">
+    <div style="font-size:3rem;margin-bottom:8px">${m.emoji}</div>
+    <h3>${m.title}</h3><p>${m.sub}</p>
     <button class="btn-ghost-sm" onclick="resetFilters()">Clear Filters</button>
   </div>`;
 }
@@ -850,11 +1036,49 @@ function buildCard(a, idx=0) {
   card.classList.add('fade-in-on-scroll');
   scrollObserver.observe(card);
 
+  // Compute helpers for new features
+  const totalReactions = (a.reactions?.like||0)+(a.reactions?.fire||0)+(a.reactions?.wow||0)+(a.reactions?.love||0);
+  const reactionStr = totalReactions >= 1000 ? (totalReactions/1000).toFixed(1)+'K' : String(totalReactions);
+  const isLive = a.publishedAt && (Date.now() - new Date(a.publishedAt)) < 30*60*1000;
+  const hasScores = STATE.activeTab==='reviews' && (a.criticScore>0 || a.audienceScore>0);
+  const R = 12, circ = 2*Math.PI*R;
+
+  const scoresHTML = hasScores ? `
+    <div class="card-scores">
+      ${a.criticScore>0?`<div class="card-score-item">
+        <div class="card-score-ring">
+          <svg width="32" height="32" viewBox="0 0 32 32">
+            <circle class="ring-bg-sm" cx="16" cy="16" r="${R}"/>
+            <circle class="ring-fill-sm critic-sm" cx="16" cy="16" r="${R}"
+              stroke-dasharray="${circ}"
+              stroke-dashoffset="${circ - (a.criticScore/100)*circ}"
+              data-offset="${circ - (a.criticScore/100)*circ}"/>
+          </svg>
+          <div class="card-score-pct">${a.criticScore}%</div>
+        </div>
+        <span>Critics</span>
+      </div>`:''}
+      ${a.audienceScore>0?`<div class="card-score-item">
+        <div class="card-score-ring">
+          <svg width="32" height="32" viewBox="0 0 32 32">
+            <circle class="ring-bg-sm" cx="16" cy="16" r="${R}"/>
+            <circle class="ring-fill-sm audience-sm" cx="16" cy="16" r="${R}"
+              stroke-dasharray="${circ}"
+              stroke-dashoffset="${circ - (a.audienceScore/100)*circ}"
+              data-offset="${circ - (a.audienceScore/100)*circ}"/>
+          </svg>
+          <div class="card-score-pct">${a.audienceScore}%</div>
+        </div>
+        <span>Audience</span>
+      </div>`:''}
+    </div>` : '';
+
   card.innerHTML = `
     <div class="card-thumb">
       <div class="card-thumb-img ${a.grad}" style="${a.img?`background-image:url('${a.img}');background-size:cover;background-position:center`:''}"></div>
       <span class="card-cat-badge${a.badge==='BREAKING'?' breaking':''}">${a.badge||a.category}</span>
       ${a.trailerUrl?`<span class="card-trailer-badge"><span class="play-dot">&#9654;</span> Trailer</span>`:''}
+      ${isLive?`<span class="card-live-badge"><span class="card-live-dot"></span>LIVE</span>`:''}
       <button class="btn-card-bk${isSaved?' saved':''}" data-id="${a.id}" aria-label="Save">
         <svg viewBox="0 0 24 24" fill="${isSaved?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
       </button>
@@ -862,12 +1086,16 @@ function buildCard(a, idx=0) {
     <div class="card-body">
       <h3 class="card-title">${a.title}</h3>
       <p class="card-dek">${a.dek}</p>
+      ${scoresHTML}
       <div class="card-footer">
         <div class="card-byline">
           <span class="byline-name">${a.author.name}</span>
-          <span class="card-time">${ago(a.publishedAt)}</span>
+          <span class="card-time">${a.readTimeMins?a.readTimeMins+' min · ':''}${ago(a.publishedAt)}</span>
         </div>
-        <button class="btn-read-more" data-id="${a.id}">Read More</button>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${totalReactions>0?`<span class="card-reactions"><span class="card-reaction-fire">🔥</span>${reactionStr}</span>`:''}
+          <button class="btn-read-more" data-id="${a.id}">Read More</button>
+        </div>
       </div>
     </div>`;
 
@@ -880,32 +1108,116 @@ function buildCard(a, idx=0) {
 
 $('sort-select').addEventListener('change', e => { STATE.activeSort = e.target.value; loadFeed(); });
 $('btn-view-grid').addEventListener('click', () => { STATE.viewMode='grid'; grid.className='articles-grid grid-view'; $('btn-view-grid').classList.add('active'); $('btn-view-list').classList.remove('active'); loadFeed(); });
-$('btn-view-list').addEventListener('click', () => { STATE.viewMode='list'; grid.className='articles-grid list-view'; $('btn-view-list').classList.add('active'); $('btn-view-grid').classList.remove('active'); loadFeed(); });
+$('btn-view-list').addEventListener('click', () => { STATE.viewMode='list'; grid.className='articles-grid list-view'; grid.classList.remove('magazine-layout'); $('btn-view-list').classList.add('active'); $('btn-view-grid').classList.remove('active'); loadFeed(); });
 $('btn-load-more').addEventListener('click', () => { STATE.feedPage++; loadFeed(true); });
 $('chip-clear').addEventListener('click', () => { STATE.activeRegion='GL'; save(); syncUI(); buildHero(); loadFeed(); });
 
+let _loadingMore = false;
 new IntersectionObserver(entries => {
-  if(entries[0].isIntersecting && !$('load-more-wrap').classList.contains('hidden')) {
-    STATE.feedPage++; loadFeed(true);
+  if(entries[0].isIntersecting && !$('load-more-wrap').classList.contains('hidden') && !_loadingMore) {
+    _loadingMore = true;
+    STATE.feedPage++;
+    loadFeed(true);
+    setTimeout(() => { _loadingMore = false; }, 1200);
   }
-},{rootMargin:'200px'}).observe($('scroll-sentinel'));
+},{rootMargin:'500px'}).observe($('scroll-sentinel'));
 
 const S2T = {home:'latest',trending:'trending',reviews:'reviews',upcoming:'upcoming',boxoffice:'boxoffice'};
 $$('.nav-link[data-section]').forEach(l => l.addEventListener('click', e => {
   e.preventDefault();
   const section = l.dataset.section;
-  if(section==='streaming') { $('streaming-sec').scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  if(section==='streaming') { $('streaming-sec')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
   const t = S2T[section]||'latest';
-  STATE.activeTab = t; STATE.filterGenre = null;
+  STATE.activeTab = t;
+  STATE.filterGenre = null;
+  STATE.activeCategory = 'All';
+  // Reset feed title
+  const titleEl = $('feed-section-title');
+  const descEl  = $('feed-section-desc');
+  if(titleEl) titleEl.textContent = TAB_CFG[t]?.h || "Today's Top News";
+  if(descEl)  descEl.textContent  = TAB_CFG[t]?.p || '';
   syncUI(); loadFeed();
-  if(t!=='latest') $('feed-section').scrollIntoView({behavior:'smooth',block:'start'});
+  if(t!=='latest') $('feed-section')?.scrollIntoView({behavior:'smooth',block:'start'});
   log('nav','Nav: '+section);
 }));
 
+
+const GENRE_QUERY_MAP = {
+  'Action':    'action film',
+  'Horror':    'horror film',
+  'Sci-Fi':    'science fiction film',
+  'Drama':     'drama film',
+  'Thriller':  'thriller film',
+  'Animation': 'animation animated film',
+  'Anime':     'anime japan animation',
+  'Bollywood': 'bollywood india film',
+  'Awards':    'oscars bafta awards film',
+  'Streaming': 'netflix streaming new release film',
+};
+
+/* Industry → Guardian search query map */
+const INDUSTRY_QUERY_MAP = {
+  'Hollywood':      'hollywood film usa american cinema',
+  'Bollywood':      'bollywood india hindi film mumbai',
+  'Tollywood':      'tollywood telugu film andhra telangana',
+  'Kollywood':      'kollywood tamil film chennai kollywood',
+  'Mollywood':      'mollywood malayalam film kerala',
+  'Sandalwood':     'sandalwood kannada film karnataka',
+  'K-Cinema':       'korean cinema film south korea kpop',
+  'British Cinema': 'british film uk cinema london bafta',
+  'Japanese Cinema':'japanese cinema film japan tokyo',
+};
 $$('.mega-link').forEach(l => l.addEventListener('click', e => {
   e.preventDefault();
-  if(l.dataset.genre) { STATE.filterGenre=l.dataset.genre; STATE.activeTab='latest'; syncUI(); loadFeed(); }
-  if(l.dataset.section==='streaming') { $('streaming-sec').scrollIntoView({behavior:'smooth',block:'start'}); }
+
+  if(l.dataset.genre) {
+    const genre = l.dataset.genre;
+    STATE.activeCategory = genre;
+    STATE.filterGenre = genre;
+    STATE.activeTab = 'latest';
+    STATE.feedPage = 1;
+    const titleEl = $('feed-section-title');
+    const descEl  = $('feed-section-desc');
+    if(titleEl) titleEl.textContent = genre + ' Films';
+    if(descEl)  descEl.textContent  = 'Latest ' + genre + ' film news, reviews and coverage';
+    syncUI();
+    loadFeed();
+    $('feed-section')?.scrollIntoView({behavior:'smooth', block:'start'});
+    log('nav','Category: ' + genre);
+  }
+
+  if(l.dataset.industry) {
+    const industry = l.dataset.industry;
+    const query = INDUSTRY_QUERY_MAP[industry] || industry + ' film cinema';
+    STATE.activeCategory = query;
+    STATE.filterGenre = industry;
+    STATE.activeTab = 'latest';
+    STATE.feedPage = 1;
+    const titleEl = $('feed-section-title');
+    const descEl  = $('feed-section-desc');
+    if(titleEl) titleEl.textContent = industry;
+    if(descEl)  descEl.textContent  = 'Latest news, reviews and stories from ' + industry;
+    syncUI();
+    loadFeed();
+    $('feed-section')?.scrollIntoView({behavior:'smooth', block:'start'});
+    log('nav','Industry: ' + industry);
+  }
+
+  if(l.dataset.section === 'streaming') {
+    $('streaming-sec')?.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  if(l.dataset.section === 'awards') {
+    STATE.activeCategory = 'oscars bafta awards film';
+    STATE.filterGenre = 'awards';
+    STATE.activeTab = 'latest';
+    STATE.feedPage = 1;
+    const titleEl = $('feed-section-title');
+    const descEl  = $('feed-section-desc');
+    if(titleEl) titleEl.textContent = 'Awards & Festivals';
+    if(descEl)  descEl.textContent  = 'Oscars, BAFTA, Cannes, TIFF and festival coverage';
+    syncUI(); loadFeed();
+    $('feed-section')?.scrollIntoView({behavior:'smooth', block:'start'});
+  }
 }));
 
 $('logo-home').addEventListener('click', e => { e.preventDefault(); STATE.activeTab='latest'; STATE.filterGenre=null; STATE.activeCategory='All'; syncUI(); loadFeed(); window.scrollTo({top:0,behavior:'smooth'}); });
@@ -913,6 +1225,12 @@ $('logo-home').addEventListener('click', e => { e.preventDefault(); STATE.active
 window.addEventListener('scroll', () => {
   $('app-header').classList.toggle('scrolled', window.scrollY > 60);
   $('back-top').classList.toggle('hidden', window.scrollY < 400);
+  // Page-level reading progress
+  const scrolled = window.scrollY;
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = total > 0 ? (scrolled / total) * 100 : 0;
+  const fill = $('page-progress-fill');
+  if (fill) fill.style.width = pct + '%';
 },{passive:true});
 
 $('back-top').addEventListener('click', () => window.scrollTo({top:0,behavior:'smooth'}));
@@ -923,8 +1241,20 @@ $('back-top').addEventListener('click', () => window.scrollTo({top:0,behavior:'s
 function toggleBk(id) {
   const a = ARTICLE_MAP[id]; if(!a) return;
   const idx = STATE.bookmarks.indexOf(id);
-  if(idx===-1) { STATE.bookmarks.push(id); toast(`Saved: "${a.title.slice(0,35)}…"`,'success'); log('bookmark','Saved: '+id); }
-  else { STATE.bookmarks.splice(idx,1); toast('Removed from saved','info'); log('bookmark','Removed: '+id); }
+  if(idx===-1) {
+    STATE.bookmarks.push(id);
+    toast(`Saved: "${a.title.slice(0,35)}…"`,'success');
+    log('bookmark','Saved: '+id);
+    // Sync to API
+    if(STATE.isLoggedIn) API.saveBookmark(id).catch(()=>{});
+  } else {
+    STATE.bookmarks.splice(idx,1);
+    toast('Removed from saved','info');
+    log('bookmark','Removed: '+id);
+    // Sync to API
+    if(STATE.isLoggedIn) API.removeBookmark(id).catch(()=>{});
+  }
+  if(navigator.vibrate) navigator.vibrate(10);
   save(); syncUI(); refreshBkDrawer();
   $$('.btn-card-bk[data-id="'+id+'"]').forEach(b => {
     const saved = STATE.bookmarks.includes(id);
@@ -974,8 +1304,37 @@ $('btn-do-clear').addEventListener('click', () => { STATE.bookmarks=[]; save(); 
 /* ============================================================
    ARTICLE MODAL
    ============================================================ */
-function openArticle(id) {
-  const a = ARTICLE_MAP[id]; if(!a) return;
+async function openArticle(id) {
+  // Check local map first
+  let a = ARTICLE_MAP[id];
+
+  // Not found locally — fetch from API (Guardian or TMDB articles)
+  if (!a) {
+    // Show loading state in modal while fetching
+    $('article-bd').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    $('article-body-txt').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-3)"><div style="font-size:2rem;margin-bottom:12px">⏳</div><p>Loading article…</p></div>';
+    $('art-title').textContent = '';
+    $('art-cat-badge').textContent = '';
+    $('art-author-chip').innerHTML = '';
+    $('art-time').textContent = '';
+    $('art-read-time').textContent = '';
+    try {
+      const res = await API.getArticle(id);
+      a = res.data;
+      // Cache it so subsequent opens are instant
+      if (a) ARTICLE_MAP[a.id] = a;
+    } catch(e) {
+      $('article-body-txt').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-3)"><div style="font-size:2rem;margin-bottom:12px">⚠️</div><p>Could not load article. Please try again.</p><button class="btn-primary" style="margin-top:16px" onclick="closeArticle()">Close</button></div>';
+      log('modal','Failed to fetch article: '+id);
+      return;
+    }
+    if (!a) {
+      $('article-body-txt').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-3)"><p>Article not found.</p></div>';
+      return;
+    }
+  }
+
   STATE.openArticle = id;
 
   const bg = document.createElement('div');
@@ -995,6 +1354,15 @@ function openArticle(id) {
 
   const body = $('article-body-txt');
   body.innerHTML = a.body.map(p => p.includes('<blockquote>') ? p : `<p>${p}</p>`).join('');
+  // For Guardian articles, add a "Read full article" link at the bottom
+  if (a.sourceUrl) {
+    body.innerHTML += `<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+      <a href="${a.sourceUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;color:var(--red);font-weight:700;font-size:.88rem;text-decoration:none">
+        Read full article on The Guardian
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+    </div>`;
+  }
   body.style.fontSize = `${STATE.articleFontScale}rem`;
 
   renderScores(a.criticScore, a.audienceScore);
@@ -1041,8 +1409,10 @@ function openArticle(id) {
     $('art-streaming-logos').innerHTML = a.streamingOn.map(s=>`<div class="stream-logo">${s}</div>`).join('');
   } else $('art-streaming-sec').classList.add('hidden');
 
-  const more = ARTICLES.filter(x => x.id!==id && (x.region===a.region||x.category===a.category)).slice(0,4);
-  $('art-more-list').innerHTML = more.map(m=>`<div class="more-item" data-id="${m.id}" role="button" tabindex="0"><div class="more-thumb ${m.grad}" style="${m.img?`background-image:url('${m.img.replace('1400/700','120/120')}');background-size:cover;background-position:center`:''}"></div><div><div class="more-cat">${m.category}</div><div class="more-title">${m.title}</div></div></div>`).join('');
+  // More articles: combine cached API articles + local articles for sidebar
+  const allCached = Object.values(ARTICLE_MAP);
+  const more = allCached.filter(x => x.id!==id && (x.category===a.category)).slice(0,4);
+  $('art-more-list').innerHTML = more.map(m=>`<div class="more-item" data-id="${m.id}" role="button" tabindex="0"><div class="more-thumb ${m.grad||'article-bg-grad-1'}" style="${m.img?`background-image:url('${m.img}');background-size:cover;background-position:center`:''}"></div><div><div class="more-cat">${m.category}</div><div class="more-title">${m.title}</div></div></div>`).join('');
   $('art-more-list').querySelectorAll('.more-item').forEach(el => {
     el.addEventListener('click', () => openArticle(el.dataset.id));
     el.addEventListener('keydown', e => { if(e.key==='Enter') openArticle(el.dataset.id); });
@@ -1076,6 +1446,16 @@ function openArticle(id) {
   };
 
   log('modal','Opened: '+a.title.slice(0,40));
+  // Update URL without page reload
+  const slug = a.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+  history.pushState({ articleId: id }, a.title, `/article/${id}/${slug}`);
+  document.title = `${a.title} — CineWire`;
+  const _ogT=document.querySelector('meta[property="og:title"]');
+  const _ogD=document.querySelector('meta[property="og:description"]');
+  const _ogI=document.querySelector('meta[property="og:image"]');
+  if(_ogT)_ogT.setAttribute('content',a.title+' — CineWire');
+  if(_ogD)_ogD.setAttribute('content',a.dek||'Read on CineWire');
+  if(_ogI&&a.img)_ogI.setAttribute('content',a.img);
 }
 
 function closeArticle() {
@@ -1084,6 +1464,15 @@ function closeArticle() {
   STATE.openArticle = null;
   $('article-sticky-bar').classList.remove('visible');
   log('modal','Closed article');
+  // Restore URL
+  history.pushState({}, 'CineWire', '/');
+  document.title = 'CineWire — Global Movie News';
+  const _ogT=document.querySelector('meta[property="og:title"]');
+  const _ogD=document.querySelector('meta[property="og:description"]');
+  const _ogI=document.querySelector('meta[property="og:image"]');
+  if(_ogT)_ogT.setAttribute('content','CineWire — Global Movie News');
+  if(_ogD)_ogD.setAttribute('content',"The world's cinema, in your hands.");
+  if(_ogI)_ogI.setAttribute('content','https://placehold.co/1200x630/e50914/ffffff?text=CineWire');
 }
 
 $('btn-close-article').addEventListener('click', closeArticle);
@@ -1093,8 +1482,8 @@ function syncStickyBk() {
   const saved = STATE.bookmarks.includes(STATE.openArticle);
   $('sticky-bk').classList.toggle('active', saved);
 }
-$('sticky-bk')?.addEventListener('click', () => { if(!STATE.openArticle) return; toggleBk(STATE.openArticle); syncStickyBk(); });
-$('sticky-share')?.addEventListener('click', () => openShare(STATE.openArticle));
+$('sticky-bk')?.addEventListener('click', (e) => { e.stopPropagation(); if(!STATE.openArticle) return; toggleBk(STATE.openArticle); syncStickyBk(); });
+$('sticky-share')?.addEventListener('click', (e) => { e.stopPropagation(); openShare(STATE.openArticle); });
 $('sticky-font-dn')?.addEventListener('click', () => { STATE.articleFontScale=Math.max(.8,STATE.articleFontScale-.08); $('article-body-txt').style.fontSize=STATE.articleFontScale+'rem'; });
 $('sticky-font-up')?.addEventListener('click', () => { STATE.articleFontScale=Math.min(1.3,STATE.articleFontScale+.08); $('article-body-txt').style.fontSize=STATE.articleFontScale+'rem'; });
 
@@ -1127,10 +1516,11 @@ function addToWl(title) {
    COMMENTS
    ============================================================ */
 function buildComments(a) {
-  $('comments-count').textContent = a.comments.reduce((n,c) => n+1+(c.replies?.length||0), 0);
+  const commentsArr = Array.isArray(a.comments) ? a.comments : [];
+  $('comments-count').textContent = commentsArr.reduce((n,c) => n+1+(c.replies?.length||0), 0);
   const list = $('comments-list');
   list.innerHTML = '';
-  let comments = [...a.comments];
+  let comments = [...commentsArr];
   if(STATE.commentSort==='top') comments.sort((a,b) => b.likes-a.likes);
   if(!comments.length) { list.innerHTML = '<p style="color:var(--text-3);font-style:italic;font-size:.84rem">No comments yet — start the conversation!</p>'; return; }
   comments.forEach(c => {
@@ -1170,6 +1560,7 @@ $('comment-form').addEventListener('submit', e => {
   const txt = $('comment-input').value.trim();
   if(!txt || !STATE.openArticle) return;
   const a = ARTICLE_MAP[STATE.openArticle];
+  if(!a) return;
   const name = STATE.isLoggedIn ? STATE.user?.name : 'Cinema Fan';
   a.comments.unshift({id:'c'+Date.now(),user:name,avatar:(name[0]||'G').toUpperCase(),verified:false,text:txt,time:'Just now',likes:0,replies:[]});
   $('comment-input').value = ''; $('comment-form-btns').classList.add('hidden');
@@ -1197,12 +1588,50 @@ let shareId = null;
 function openShare(id) { shareId=id; $('share-bd').classList.remove('hidden'); log('modal','Share: '+id); }
 $('btn-close-share').addEventListener('click', () => $('share-bd').classList.add('hidden'));
 $('share-bd').addEventListener('click', e => { if(e.target===$('share-bd')) $('share-bd').classList.add('hidden'); });
-$$('.share-opt').forEach(b => b.addEventListener('click', () => {
-  const plat = b.dataset.share;
-  const url  = 'https://cinewire.com/article/'+shareId;
-  if(plat==='copy') { navigator.clipboard?.writeText(url).then(()=>toast('Link copied!','success')).catch(()=>toast('Link: '+url,'info')); }
-  else toast('Opening '+plat+'...','info');
-  $('share-bd').classList.add('hidden'); log('modal','Shared via '+plat);
+$$('.share-opt').forEach(b => b.addEventListener('click', async () => {
+  const plat    = b.dataset.share;
+  const article = ARTICLE_MAP[shareId];
+  const url     = `${window.location.origin}?article=${shareId}`;
+  const title   = article?.title || 'CineWire';
+  const text    = article?.dek   || 'Check this out on CineWire';
+
+  if (plat === 'native' || plat === 'copy') {
+    // Try Web Share API first (mobile native share sheet)
+    if (plat === 'native' && navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        toast('Shared!', 'success');
+        $('share-bd').classList.add('hidden');
+        log('modal', 'Native share: ' + shareId);
+        return;
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          // Fall through to copy
+        } else {
+          $('share-bd').classList.add('hidden');
+          return;
+        }
+      }
+    }
+    // Copy link fallback
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('Link copied to clipboard!', 'success');
+    } catch {
+      toast('Link: ' + url, 'info');
+    }
+  } else if (plat === 'twitter') {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
+  } else if (plat === 'whatsapp') {
+    window.open(`https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`, '_blank');
+  } else if (plat === 'facebook') {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+  } else if (plat === 'reddit') {
+    window.open(`https://reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`, '_blank');
+  }
+
+  $('share-bd').classList.add('hidden');
+  log('modal', 'Shared via ' + plat);
 }));
 
 /* ============================================================
@@ -1263,7 +1692,7 @@ $('auth-form').addEventListener('submit', e => {
   doLogin(name,email,'Email');
 });
 $('btn-signout').addEventListener('click', () => {
-  STATE.isLoggedIn=false; STATE.user=null; save(); syncUI();
+  STATE.isLoggedIn=false; STATE.user=null; clearToken(); save(); syncUI();
   $('user-dropdown').classList.add('hidden');
   toast('Signed out. See you next time!','info'); log('auth','Signed out');
 });
@@ -1360,9 +1789,55 @@ $('mob-overlay').addEventListener('click', closeMobNav);
 $$('.mob-link').forEach(l => l.addEventListener('click', () => { STATE.activeTab=S2T[l.dataset.section]||'latest'; syncUI(); loadFeed(); closeMobNav(); }));
 
 /* ============================================================
+   BOTTOM MOBILE NAV
+   ============================================================ */
+const S2BNAV = { home:'bnav-home', trending:'bnav-trending', boxoffice:'bnav-trending', reviews:'bnav-trending' };
+
+function syncBottomNav(section) {
+  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+  const activeId = S2BNAV[section] || 'bnav-home';
+  const el = document.getElementById(activeId);
+  if (el) el.classList.add('active');
+  // Update saved badge
+  const badge = document.getElementById('bnav-saved-badge');
+  if (badge) {
+    badge.textContent = STATE.bookmarks.length;
+    badge.classList.toggle('hidden', STATE.bookmarks.length === 0);
+  }
+}
+
+document.querySelectorAll('.bottom-nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const sec = btn.dataset.section;
+    document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (sec === 'saved') {
+      openBkDrawer();
+    } else if (sec === 'profile') {
+      if (STATE.isLoggedIn) {
+        document.getElementById('user-dropdown').classList.toggle('hidden');
+      } else {
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('app-header').style.display = 'none';
+        document.body.style.paddingTop = '0';
+      }
+    } else if (sec === 'categories') {
+      document.getElementById('categories-sec').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      const tab = S2T[sec] || 'latest';
+      STATE.activeTab = tab;
+      STATE.filterGenre = null;
+      syncUI();
+      loadFeed();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+});
+
+/* ============================================================
    SEARCH
    ============================================================ */
-$('header-search-input').addEventListener('input', dbn(e => {
+$('header-search-input')?.addEventListener('input', dbn(e => {
   const q = e.target.value.trim();
   const ac = $('search-autocomplete');
   if(!q) { ac.classList.add('hidden'); return; }
@@ -1372,13 +1847,13 @@ $('header-search-input').addEventListener('input', dbn(e => {
   ac.innerHTML = res.map(a=>`<div class="ac-item" data-id="${a.id}" role="option" tabindex="0"><div class="ac-thumb ${a.grad}" style="${a.img?`background-image:url('${a.img.replace('1400/700','80/80')}');background-size:cover`:''}"></div><div><div class="ac-info-title">${hl(a.title,q).slice(0,60)}...</div><div class="ac-info-meta">${a.category} · ${a.author.name}</div></div></div>`).join('');
   ac.classList.remove('hidden');
   ac.querySelectorAll('.ac-item').forEach(el => {
-    const open = () => { openArticle(el.dataset.id); ac.classList.add('hidden'); $('header-search-input').value=''; };
+    const open = () => { openArticle(el.dataset.id); ac.classList.add('hidden'); const si = $('header-search-input'); if(si) si.value=''; };
     el.addEventListener('click', open);
     el.addEventListener('keydown', e => { if(e.key==='Enter') open(); });
   });
 },220));
-$('header-search-input').addEventListener('keydown', e => { if(e.key==='Escape') { $('search-autocomplete').classList.add('hidden'); $('header-search-input').value=''; } });
-document.addEventListener('click', e => { if(!e.target.closest('.header-search-wrap')) $('search-autocomplete').classList.add('hidden'); });
+$('header-search-input')?.addEventListener('keydown', e => { if(e.key==='Escape') { $('search-autocomplete')?.classList.add('hidden'); const si = $('header-search-input'); if(si) si.value=''; } });
+document.addEventListener('click', e => { if(!e.target.closest('.header-search-wrap')) $('search-autocomplete')?.classList.add('hidden'); });
 
 /* ============================================================
    KEYBOARD SHORTCUTS
@@ -1416,6 +1891,8 @@ function buildTrending() {
         <div class="trend-time">${ago(a.publishedAt)}</div>
       </div>
     </div>`).join('');
+  // Cache trending articles so openArticle can find them
+  sorted.forEach(a => { if (!ARTICLE_MAP[a.id]) ARTICLE_MAP[a.id] = a; });
   rail.querySelectorAll('.trend-card').forEach(c => {
     const open = () => openArticle(c.dataset.id);
     c.addEventListener('click', open);
@@ -1443,11 +1920,11 @@ function buildTicker() {
 /* ============================================================
    NEWSLETTER
    ============================================================ */
-$('newsletter-form').addEventListener('submit', e => {
+$('newsletter-form')?.addEventListener('submit', e => {
   e.preventDefault();
-  const email = $('nl-email').value.trim();
-  $('newsletter-form').classList.add('hidden');
-  $('nl-success').classList.remove('hidden');
+  const email = $('nl-email')?.value || ''.trim();
+  $('newsletter-form')?.classList.add('hidden');
+  $('nl-success')?.classList.remove('hidden');
   confetti();
   toast('Subscribed with '+email+'!','success');
   log('nav','Newsletter: '+email);
@@ -1467,15 +1944,144 @@ function confetti() {
 /* ============================================================
    STREAMING
    ============================================================ */
+
+// Platform badge colors
+const PLATFORM_COLORS = {
+  'Netflix':    '#e50914',
+  'Prime Video':'#00a8e0',
+  'Disney+':    '#113ccf',
+  'Apple TV+':  '#1d1d1f',
+  'Max':        '#002be7',
+  'Mubi':       '#222222',
+  'Hulu':       '#1ce783',
+  'Peacock':    '#000000',
+  'Paramount+': '#0064ff',
+};
+
 function buildStreaming() {
-  $('streaming-cards').innerHTML = STREAMING.map(s => `
-    <div class="stream-card">
-      <div class="stream-poster ${s.grad}" style="${s.img?`background-image:url('${s.img}');background-size:cover;background-position:center`:''}">
-        <div class="stream-badge">${s.platform}</div>
-      </div>
-      <div class="stream-body"><div class="stream-title">${s.title}</div><div class="stream-meta">${s.genre}</div></div>
-    </div>`).join('');
+  const container = $('streaming-cards');
+
+  // Group by platform for the platform filter tabs
+  const platforms = ['All', ...new Set(STREAMING.map(s => s.platform))];
+
+  container.parentElement.querySelector('.stream-filter-row')?.remove();
+  const filterRow = document.createElement('div');
+  filterRow.className = 'stream-filter-row';
+  filterRow.innerHTML = platforms.map((p,i) =>
+    `<button class="stream-filter-btn${i===0?' active':''}" data-platform="${p}">${p}</button>`
+  ).join('');
+  container.before(filterRow);
+
+  let activePlatform = 'All';
+
+  function renderCards(platform) {
+    const list = platform === 'All' ? STREAMING : STREAMING.filter(s => s.platform === platform);
+    container.innerHTML = list.map((s, i) => {
+      const origIdx = STREAMING.indexOf(s);
+      const color = PLATFORM_COLORS[s.platform] || '#333';
+      return `
+      <div class="stream-card" data-stream-idx="${origIdx}" role="button" tabindex="0">
+        <div class="stream-poster ${s.grad}" style="${s.img?`background-image:url('${s.img}');background-size:cover;background-position:center`:''};animation-delay:${i*.04}s">
+          <div class="stream-platform-badge" style="background:${color}">${s.platform}</div>
+          ${s.rating ? `<div class="stream-rating-badge">★ ${s.rating}</div>` : ''}
+        </div>
+        <div class="stream-body">
+          <div class="stream-title">${s.title}</div>
+          <div class="stream-meta">
+            <span class="stream-genre">${s.genre}</span>
+            ${s.year ? `<span class="stream-year">${s.year}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    container.querySelectorAll('.stream-card').forEach(card => {
+      const open = () => openStreamModal(+card.dataset.streamIdx);
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') open(); });
+    });
+  }
+
+  renderCards('All');
+
+  filterRow.querySelectorAll('.stream-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterRow.querySelectorAll('.stream-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activePlatform = btn.dataset.platform;
+      renderCards(activePlatform);
+    });
+  });
+
+  // Prev/Next arrows
+  const rail = $('streaming-cards');
+  $('stream-prev')?.addEventListener('click', () => rail.scrollBy({ left: -500, behavior: 'smooth' }));
+  $('stream-next')?.addEventListener('click', () => rail.scrollBy({ left: 500, behavior: 'smooth' }));
 }
+
+// Platform → URL mapping
+const PLATFORM_URLS = {
+  'Netflix':    'https://www.netflix.com',
+  'Prime Video':'https://www.primevideo.com',
+  'Apple TV+':  'https://tv.apple.com',
+  'Disney+':    'https://www.disneyplus.com',
+  'Mubi':       'https://mubi.com',
+  'Max':        'https://www.max.com',
+  'Hulu':       'https://www.hulu.com',
+  'Peacock':    'https://www.peacocktv.com',
+  'Paramount+': 'https://www.paramountplus.com',
+};
+
+const STREAM_DESCS = {
+  'Squid Game S3':          "The global phenomenon returns. 456 new players. One new game. Season 3 is the darkest yet — now streaming on Netflix.",
+  'Stranger Things S5':     "The final chapter of the Hawkins saga. Eleven faces the ultimate threat. Streaming exclusively on Netflix.",
+  'Severance S3':           "Mark S. continues the fight between his work and personal selves in this mind-bending thriller. On Apple TV+.",
+  'The Last of Us S3':      "Joel and Ellie's journey continues in the post-apocalyptic world. The Emmy-winning HBO series on Max.",
+  'House of the Dragon S3': "Fire & Blood. The Targaryen civil war reaches its brutal peak. Available on Max.",
+  'Andor S2':               "The most gripping Star Wars story ever told. Diego Luna returns in the epic conclusion on Disney+.",
+  'Fallout S2':             "The post-nuclear wasteland expands in season 2 of Amazon's smash hit. On Prime Video.",
+  'The Boys S5':            "The final season of the brutal superhero satire. Prime Video's most watched show ever.",
+};
+
+function openStreamModal(idx) {
+  const s = STREAMING[idx];
+  if (!s) return;
+  const poster = $('stream-detail-poster');
+  if (poster) {
+    poster.className = 'stream-detail-poster ' + (s.grad || 'article-bg-grad-2');
+    poster.style.cssText = s.img ? 'background-image:url(' + "'" + s.img + "'" + ');background-size:cover;background-position:center' : '';
+  }
+  const plat = $('stream-detail-platform');
+  if (plat) plat.textContent = s.platform;
+  const title = $('stream-detail-title');
+  if (title) title.textContent = s.title;
+  const meta = $('stream-detail-meta');
+  if (meta) meta.innerHTML = '<span>' + s.genre + '</span><span>Streaming Now</span>';
+  const desc = $('stream-detail-desc');
+  if (desc) desc.textContent = STREAM_DESCS[s.title] || (s.title + ' is now streaming on ' + s.platform + '. A ' + s.genre.toLowerCase() + ' title available to watch right now.');
+  const btn = $('stream-detail-btn');
+  if (btn) {
+    btn.href = PLATFORM_URLS[s.platform] || '#';
+    const btnTxt = $('stream-detail-btn-txt');
+    if (btnTxt) btnTxt.textContent = 'Watch on ' + s.platform;
+  }
+  const alsoSec = $('stream-also-on');
+  if (alsoSec) alsoSec.classList.add('hidden');
+  const bd = $('stream-bd');
+  if (bd) bd.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  log('modal', 'Opened stream: ' + s.title);
+}
+
+function closeStreamModal() {
+  const bd = $('stream-bd');
+  if (bd) bd.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+$('btn-close-stream')?.addEventListener('click', closeStreamModal);
+$('stream-bd')?.addEventListener('click', e => { if (e.target === $('stream-bd')) closeStreamModal(); });
+
 
 /* ============================================================
    DEV PANEL
@@ -1533,22 +2139,81 @@ function init() {
   applyTheme(STATE.theme);
   syncUI();
 
+  // ── Breaking News Banner ──
+  const banner = $('breaking-banner');
+  const dismissed = sessionStorage.getItem('cw_banner_dismissed');
+  if (banner && !dismissed) {
+    document.body.classList.add('has-banner');
+    const bannerH = banner.offsetHeight || 36;
+    document.documentElement.style.setProperty('--banner-h', bannerH + 'px');
+  } else if (banner) {
+    banner.classList.add('dismissed');
+  }
+  $('breaking-banner-close')?.addEventListener('click', () => {
+    $('breaking-banner').classList.add('dismissed');
+    document.body.classList.remove('has-banner');
+    document.documentElement.style.setProperty('--banner-h', '0px');
+    sessionStorage.setItem('cw_banner_dismissed', '1');
+  });
+
   // Hide dev panel in production
   if(location.hostname !== 'localhost' && !location.search.includes('debug=true')) {
     const devPanel = $('dev-panel');
     if(devPanel) devPanel.style.display = 'none';
   }
 
-  buildTicker();
+  // Restore session from API if token exists
+  if(getToken() && !STATE.isLoggedIn) {
+    API.getMe().then(res => {
+      STATE.isLoggedIn = true;
+      STATE.user = res.data;
+      save(); syncUI();
+      // Load bookmarks from API
+      return API.getBookmarks();
+    }).then(res => {
+      STATE.bookmarks = res.data.map(a => a.id);
+      save(); syncUI(); refreshBkDrawer();
+    }).catch(() => clearToken());
+  }
+
   buildTrending();
   buildCategoryChips();
-  buildLanguageSection();
   buildHero();
   loadFeed();
   buildStreaming();
   renderNotifs();
   document.body.classList.add('page-enter');
   log('nav','App init');
+  // Register Service Worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(r => log('nav', 'PWA ready'))
+      .catch(e => log('nav', 'SW error: ' + e));
+  }
+  // Dismiss loading screen
+  setTimeout(()=>{const ldr=$('app-loader');if(ldr){ldr.classList.add('done');setTimeout(()=>ldr.remove(),400);}},1300);
 }
+
+/* ── URL routing ── */
+window.addEventListener('popstate', e => {
+  if (e.state?.articleId) {
+    openArticle(e.state.articleId);
+  } else if (!$('article-bd').classList.contains('hidden')) {
+    closeArticle();
+  }
+});
+// Open article if page loaded with /article/ID URL
+(function() {
+  const m = location.pathname.match(/^\/article\/([^/]+)/);
+  if (m) setTimeout(() => openArticle(m[1]), 600);
+})();
+
+/* ── Pull to Refresh ── */
+(function(){
+  let ptrStart=0,ptrActive=false;
+  document.addEventListener('touchstart',e=>{if(window.scrollY===0)ptrStart=e.touches[0].clientY;else ptrStart=0;},{passive:true});
+  document.addEventListener('touchmove',e=>{if(!ptrStart)return;const dy=e.touches[0].clientY-ptrStart;if(dy>70&&window.scrollY===0){ptrActive=true;$('ptr-indicator')?.classList.add('active');}},{passive:true});
+  document.addEventListener('touchend',()=>{if(ptrActive){loadFeed();toast('Feed refreshed','success');}ptrActive=false;ptrStart=0;$('ptr-indicator')?.classList.remove('active');});
+})();
 
 init();

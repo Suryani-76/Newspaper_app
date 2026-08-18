@@ -1,14 +1,30 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CineWire — Global Movie News</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#e50914">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CineWire">
+  <meta name="description" content="The world's cinema, in your hands. Breaking movie news, reviews, box office and more.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23e50914'/><text x='16' y='23' font-size='20' text-anchor='middle' font-family='Arial Black,sans-serif' fill='white' font-weight='900'>C</text></svg>">
+  <meta property="og:title" content="CineWire — Global Movie News">
+  <meta property="og:description" content="The world's cinema, in your hands.">
+  <meta property="og:image" content="https://placehold.co/1200x630/e50914/ffffff?text=CineWire">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
+<div id="app-loader" class="app-loader">
+  <div class="app-loader-logo"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></div>
+  <div class="app-loader-bar"><div class="app-loader-fill"></div></div>
+</div>
 <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
 <svg style="display:none;">
@@ -23,6 +39,9 @@
     </linearGradient>
   </defs>
 </svg>
+
+<div id="page-progress" style="position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;pointer-events:none;"><div id="page-progress-fill" style="height:100%;width:0%;background:var(--red);transition:width .1s ease-out;box-shadow:0 0 8px rgba(229,9,20,.5);"></div></div>
+
 
 <!-- ===== HEADER ===== -->
 <header class="app-header" id="app-header">
@@ -46,21 +65,33 @@
               <a href="#" class="mega-link" data-genre="Thriller">Thriller</a>
               <a href="#" class="mega-link" data-genre="Animation">Animation</a>
               <a href="#" class="mega-link" data-genre="Anime">Anime</a>
-              <a href="#" class="mega-link" data-genre="Bollywood">Bollywood</a>
               <div class="mega-divider"></div>
               <a href="#" class="mega-link" data-section="awards">Awards</a>
               <a href="#" class="mega-link" data-section="streaming">Streaming</a>
             </div>
           </div>
         </div>
+        <div class="nav-has-mega">
+          <a href="#" class="nav-link">Industry <span class="nav-chevron">&#9660;</span></a>
+          <div class="mega-menu mega-menu--wide">
+            <div class="mega-col">
+              <div class="mega-heading">Global Cinema</div>
+              <a href="#" class="mega-link" data-industry="Hollywood">🎬 Hollywood</a>
+              <a href="#" class="mega-link" data-industry="Bollywood">🎭 Bollywood</a>
+              <a href="#" class="mega-link" data-industry="Tollywood">🌟 Tollywood</a>
+              <a href="#" class="mega-link" data-industry="Kollywood">🎵 Kollywood</a>
+              <a href="#" class="mega-link" data-industry="Mollywood">🌴 Mollywood</a>
+              <a href="#" class="mega-link" data-industry="Sandalwood">🌿 Sandalwood</a>
+              <a href="#" class="mega-link" data-industry="K-Cinema">🇰🇷 K-Cinema</a>
+              <a href="#" class="mega-link" data-industry="British Cinema">🇬🇧 British Cinema</a>
+              <a href="#" class="mega-link" data-industry="Japanese Cinema">🇯🇵 Japanese Cinema</a>
+            </div>
+          </div>
+        </div>
       </nav>
     </div>
     <div class="header-right">
-      <div class="header-search-wrap">
-        <svg class="s-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="search" id="header-search-input" class="header-search-input" placeholder="Search CineWire..." data-i18n="searchPlaceholder" autocomplete="off">
-        <div id="search-autocomplete" class="search-autocomplete hidden"></div>
-      </div>
+
       <button id="btn-region-pill" class="region-pill" aria-label="Select region">
         <span class="region-code" id="region-pill-code">GL</span>
         <span id="region-pill-name">Global</span>
@@ -101,10 +132,7 @@
       <button id="btn-hamburger" class="btn-hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
   </div>
-  <div class="ticker-bar">
-    <span class="ticker-lbl">BOX OFFICE</span>
-    <div class="ticker-mask"><div class="ticker-track" id="ticker-track"></div></div>
-  </div>
+
 </header>
 
 <!-- ===== MOBILE NAV ===== -->
@@ -165,11 +193,30 @@
   <div class="modal-card share-card">
     <div class="mc-head"><h3>Share Story</h3><button class="mc-close" id="btn-close-share">&times;</button></div>
     <div class="share-grid">
-      <button class="share-opt" data-share="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Copy Link</button>
-      <button class="share-opt" data-share="twitter">X / Twitter</button>
-      <button class="share-opt" data-share="whatsapp">WhatsApp</button>
-      <button class="share-opt" data-share="facebook">Facebook</button>
-      <button class="share-opt" data-share="reddit">Reddit</button>
+      <button class="share-opt" data-share="native">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Share
+      </button>
+      <button class="share-opt" data-share="copy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Copy Link
+      </button>
+      <button class="share-opt" data-share="twitter">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        X / Twitter
+      </button>
+      <button class="share-opt" data-share="whatsapp">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button class="share-opt" data-share="facebook">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        Facebook
+      </button>
+      <button class="share-opt" data-share="reddit">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+        Reddit
+      </button>
     </div>
   </div>
 </div>
@@ -398,28 +445,7 @@
     </div>
   </section>
 
-  <!-- CATEGORIES -->
-  <section class="categories-sec" id="categories-sec">
-    <div class="sec-container">
-      <div class="section-hdr">
-        <h2 class="section-title">Explore Categories</h2>
-      </div>
-      <div class="category-chips" id="category-chips"></div>
-    </div>
-  </section>
-
-  <!-- LANGUAGE SECTION -->
-  <section class="language-sec" id="language-sec">
-    <div class="sec-container">
-      <div class="section-hdr">
-        <h2 class="section-title">Choose Language</h2>
-        <p class="section-sub">Get news in your preferred language</p>
-      </div>
-      <div class="language-btns" id="language-btns"></div>
-    </div>
-  </section>
-
-  <!-- TODAY'S TOP NEWS / FEED -->
+  <!-- TODAY'S TOP NEWS — Latest feed (full grid, tabbed) -->
   <section class="feed-section" id="feed-section">
     <div class="sec-container">
       <div class="feed-header-row">
@@ -434,10 +460,10 @@
             <button class="chip-x" id="chip-clear">&times;</button>
           </div>
           <select id="sort-select" class="sort-sel">
-            <option value="newest" data-i18n="newest">Newest</option>
-            <option value="popular" data-i18n="popular">Most Popular</option>
-            <option value="discussed" data-i18n="discussed">Most Discussed</option>
-            <option value="editors" data-i18n="editorsPicks">Editor's Picks</option>
+            <option value="newest">Newest</option>
+            <option value="popular">Most Popular</option>
+            <option value="discussed">Most Discussed</option>
+            <option value="editors">Editor's Picks</option>
           </select>
           <div class="view-btns">
             <button id="btn-view-grid" class="vbtn active" aria-label="Grid view">&#9632;&#9632;</button>
@@ -445,37 +471,18 @@
           </div>
         </div>
       </div>
-
-      <!-- FEED TABS -->
       <div class="feed-tabs" id="feed-tabs">
         <button class="feed-tab active" data-tab="latest">Latest</button>
         <button class="feed-tab" data-tab="trending">Trending</button>
         <button class="feed-tab" data-tab="reviews">Reviews</button>
         <button class="feed-tab" data-tab="boxoffice">Box Office</button>
       </div>
-
       <div id="articles-grid" class="articles-grid grid-view"></div>
       <div id="scroll-sentinel" style="height:1px"></div>
       <div id="load-more-wrap" class="load-more-wrap hidden">
-        <button id="btn-load-more" class="btn-load-more" data-i18n="loadMore">Load More</button>
+        <button id="btn-load-more" class="btn-load-more">Load More</button>
       </div>
     </div>
-  </section>
-
-  <!-- NEWSLETTER -->
-  <section class="newsletter-sec" id="newsletter-sec">
-    <div class="nl-inner">
-      <div class="nl-copy">
-        <h2 class="nl-h" data-i18n="newsletterTitle">Never Miss a Story</h2>
-        <p class="nl-p" data-i18n="newsletterDesc">Get the week's best cinema news every Friday.</p>
-        <form id="newsletter-form" class="nl-form">
-          <input type="email" id="nl-email" placeholder="your@email.com" class="nl-input" required>
-          <button type="submit" class="btn-primary" data-i18n="subscribeFree">Subscribe</button>
-        </form>
-      </div>
-      <div class="nl-success hidden" id="nl-success">&#10003; You're subscribed! Check your inbox.</div>
-    </div>
-    <div id="nl-confetti" class="nl-confetti"></div>
   </section>
 
   <!-- WHERE TO WATCH -->
@@ -483,9 +490,14 @@
     <div class="sec-container">
       <div class="section-hdr">
         <h2 class="section-title" data-i18n="whereToWatch">Where to Watch</h2>
-        <p class="section-sub" data-i18n="streamingDesc">New releases streaming right now</p>
+        <div class="rail-arrows">
+          <button class="rail-btn" id="stream-prev" aria-label="Previous">&#8249;</button>
+          <button class="rail-btn" id="stream-next" aria-label="Next">&#8250;</button>
+        </div>
       </div>
-      <div id="streaming-cards" class="streaming-cards"></div>
+      <div class="streaming-rail-wrap">
+        <div id="streaming-cards" class="streaming-rail"></div>
+      </div>
     </div>
   </section>
 
@@ -539,7 +551,57 @@
       </select>
     </div>
   </footer>
+  <div id="category-chips" style="display:none"></div>
+  <div class="ptr-indicator" id="ptr-indicator">↓ Release to refresh</div>
 </main>
+
+<!-- ===== STREAMING DETAIL MODAL ===== -->
+<div class="modal-bd hidden" id="stream-bd">
+  <div class="modal-card stream-detail-card">
+    <button class="mc-close" id="btn-close-stream">&times;</button>
+    <div class="stream-detail-poster" id="stream-detail-poster"></div>
+    <div class="stream-detail-body">
+      <div class="stream-detail-platform" id="stream-detail-platform"></div>
+      <h2 class="stream-detail-title" id="stream-detail-title"></h2>
+      <div class="stream-detail-meta" id="stream-detail-meta"></div>
+      <p class="stream-detail-desc" id="stream-detail-desc"></p>
+      <a class="stream-detail-btn" id="stream-detail-btn" href="#" target="_blank" rel="noopener">
+        <span id="stream-detail-btn-txt">Watch Now</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <div class="stream-also-on hidden" id="stream-also-on">
+        <div class="stream-also-lbl">Also on this platform</div>
+        <div class="stream-also-chips" id="stream-also-chips"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== BOTTOM MOBILE NAV ===== -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bottom-nav-item active" data-section="home" id="bnav-home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="bottom-nav-item" data-section="trending" id="bnav-trending">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    <span>Trending</span>
+  </button>
+  <button class="bottom-nav-item" data-section="categories" id="bnav-categories">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span>Categories</span>
+  </button>
+  <button class="bottom-nav-item" data-section="saved" id="bnav-saved">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+    <span>Saved</span>
+    <span class="bnav-badge hidden" id="bnav-saved-badge">0</span>
+  </button>
+  <button class="bottom-nav-item" data-section="profile" id="bnav-profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Profile</span>
+  </button>
+</nav>
 
 <button class="back-top hidden" id="back-top" aria-label="Back to top">&#8593;</button>
 
@@ -580,7 +642,7 @@
   </div>
 </div>
 
-<script src="translation.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="translation.js?v=11"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>
