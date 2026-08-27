@@ -42,8 +42,8 @@ const API = {
     apiFetch(`/news/latest?page=${page}&limit=${limit}&region=${region}`),
 
   // GET /api/news/category/:category
-  getCategory: (category, page = 1) =>
-    apiFetch(`/news/category/${encodeURIComponent(category)}?page=${page}`),
+  getCategory: (category, page = 1, lang = null) =>
+    apiFetch(`/news/category/${encodeURIComponent(category)}?page=${page}${lang ? '&lang=' + lang : ''}`),
 
   // GET /api/news/search?q=query&filter=all&sort=latest
   search: (q, filter = 'all', sort = 'latest') =>
@@ -378,7 +378,7 @@ const STATE = {
   heroPaused:     false,
   heroTimer:      null,
   openArticle:    null,
-  articleFontScale: 1,
+  articleFontScale: parseFloat(localStorage.getItem('cw_fontscale') || '1'),
   trailerPlaying: false,
   trailerTimer:   null,
   commentSort:    'top',
@@ -397,6 +397,7 @@ function save() {
   localStorage.setItem('cw_user',     JSON.stringify(STATE.user));
   localStorage.setItem('cw_wl',       JSON.stringify(STATE.watchlist));
   localStorage.setItem('cw_sch',      JSON.stringify(STATE.recentSearches));
+  localStorage.setItem('cw_last_visit', Date.now());
   devRefresh();
 }
 
@@ -654,11 +655,12 @@ function finishLogin() {
 /* ============================================================
    THEME
    ============================================================ */
-function applyTheme(t) {
+function applyTheme(t, showToast=false) {
   STATE.theme = t;
   document.documentElement.setAttribute('data-theme', t);
   save();
   log('nav','Theme: '+t);
+  if(showToast) toast(t === 'dark' ? '🌙 Dark mode on' : '☀️ Light mode on', 'info');
 }
 $('btn-theme').addEventListener('click', () => applyTheme(STATE.theme==='dark'?'light':'dark'));
 
@@ -909,7 +911,7 @@ function loadFeed(append=false) {
         return { data: res.data, total: res.count, fromApi: true };
       } else if (STATE.activeCategory !== 'All') {
         const catQuery = GENRE_QUERY_MAP[STATE.activeCategory] || STATE.activeCategory;
-        const res = await API.getCategory(catQuery, STATE.feedPage);
+        const res = await API.getCategory(catQuery, STATE.feedPage, STATE.industryLang || null);
         return { data: res.data, total: res.total, fromApi: true };
       } else {
         const res = await API.getLatest(STATE.feedPage, 6, STATE.activeRegion);
@@ -938,6 +940,18 @@ function loadFeed(append=false) {
         if (!ARTICLE_MAP[a.id]) ARTICLE_MAP[a.id] = a;
         grid.appendChild(buildCard(a, append?i+99:i));
       });
+      // Update tab badge with total count
+      if(!append && total) {
+        const activeTabEl = document.querySelector('.feed-tab.active');
+        if(activeTabEl) {
+          // Remove old badge
+          activeTabEl.querySelectorAll('.tab-count').forEach(b => b.remove());
+          const badge = document.createElement('span');
+          badge.className = 'tab-count';
+          badge.textContent = total > 999 ? '999+' : total;
+          activeTabEl.appendChild(badge);
+        }
+      }
       // Magazine layout: first-load, grid view, latest or trending tab, not appending
       if(!append && STATE.viewMode==='grid' && (STATE.activeTab==='latest'||STATE.activeTab==='trending')) {
         grid.classList.add('magazine-layout');
@@ -1002,6 +1016,17 @@ function renderEmpty() {
     reviews:{emoji:'⭐',title:'No reviews found',sub:'Critics are still sharpening their pencils.'},
     boxoffice:{emoji:'🎟️',title:'Box office is empty',sub:'Films are in production. Stay tuned.'},
   };
+  // Show industry-specific message when browsing a regional cinema
+  if (STATE.filterGenre && INDUSTRY_DESC[STATE.filterGenre]) {
+    grid.innerHTML=`<div class="feed-empty">
+      <div style="font-size:3rem;margin-bottom:8px">🎬</div>
+      <h3>${STATE.filterGenre}</h3>
+      <p>Limited coverage available from our news sources for this industry right now.</p>
+      <p style="font-size:.8rem;margin-top:8px;color:var(--text-3)">Try searching for specific films or directors from ${STATE.filterGenre}.</p>
+      <button class="btn-ghost-sm" onclick="resetFilters()" style="margin-top:16px">Back to All News</button>
+    </div>`;
+    return;
+  }
   const m=msgs[STATE.activeTab]||{emoji:'🎞️',title:'No films found',sub:'Try a different genre or region.'};
   grid.innerHTML=`<div class="feed-empty">
     <div style="font-size:3rem;margin-bottom:8px">${m.emoji}</div>
@@ -1040,6 +1065,10 @@ function buildCard(a, idx=0) {
   const totalReactions = (a.reactions?.like||0)+(a.reactions?.fire||0)+(a.reactions?.wow||0)+(a.reactions?.love||0);
   const reactionStr = totalReactions >= 1000 ? (totalReactions/1000).toFixed(1)+'K' : String(totalReactions);
   const isLive = a.publishedAt && (Date.now() - new Date(a.publishedAt)) < 30*60*1000;
+  const lastVisit = parseInt(localStorage.getItem('cw_last_visit') || '0');
+  const isNewSinceVisit = lastVisit > 0 && STATE.activeTab === 'latest' &&
+    a.publishedAt && new Date(a.publishedAt).getTime() > lastVisit &&
+    !isLive; // don't double-badge with LIVE
   const hasScores = STATE.activeTab==='reviews' && (a.criticScore>0 || a.audienceScore>0);
   const R = 12, circ = 2*Math.PI*R;
 
@@ -1076,20 +1105,21 @@ function buildCard(a, idx=0) {
   card.innerHTML = `
     <div class="card-thumb">
       <div class="card-thumb-img ${a.grad}" style="${a.img?`background-image:url('${a.img}');background-size:cover;background-position:center`:''}"></div>
-      <span class="card-cat-badge${a.badge==='BREAKING'?' breaking':''}">${a.badge||a.category}</span>
+      <span class="card-cat-badge${a.badge==='BREAKING'?' breaking':''}">${a.badge || (STATE.filterGenre && STATE.filterGenre !== a.category ? '🔥 ' + STATE.filterGenre : a.category)}</span>
       ${a.trailerUrl?`<span class="card-trailer-badge"><span class="play-dot">&#9654;</span> Trailer</span>`:''}
-      ${isLive?`<span class="card-live-badge"><span class="card-live-dot"></span>LIVE</span>`:''}
+      ${isLive?`<span class="card-live-badge"><span class="card-live-dot"></span>LIVE</span>`:isNewSinceVisit?`<span class="card-new-badge">NEW</span>`:''}
       <button class="btn-card-bk${isSaved?' saved':''}" data-id="${a.id}" aria-label="Save">
         <svg viewBox="0 0 24 24" fill="${isSaved?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
       </button>
     </div>
     <div class="card-body">
       <h3 class="card-title">${a.title}</h3>
-      <p class="card-dek">${a.dek}</p>
+      <p class="card-dek" id="dek-${a.id}">${a.dek}</p>
+      ${a.body && a.body[0] && a.body[0].length > 100 ? `<button class="card-show-more" data-id="${a.id}" data-preview="${(a.body[0]||'').replace(/"/g,'&quot;').replace(/<[^>]+>/g,'').slice(0,180)}">Show more ▾</button>` : ''}
       ${scoresHTML}
       <div class="card-footer">
         <div class="card-byline">
-          <span class="byline-name">${a.author.name}</span>
+          <span class="byline-name">${CATEGORY_FLAGS[a.category]||INDUSTRY_FLAGS[a.region]||''} ${a.author.name}</span>
           <span class="card-time">${a.readTimeMins?a.readTimeMins+' min · ':''}${ago(a.publishedAt)}</span>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
@@ -1099,10 +1129,37 @@ function buildCard(a, idx=0) {
       </div>
     </div>`;
 
+  // Show "Continue reading" badge if user has read progress saved
+  const savedPos = parseInt(localStorage.getItem('cw_scroll_' + a.id) || '0');
+  if(savedPos > 200) {
+    const badge = document.createElement('div');
+    badge.className = 'card-continue-badge';
+    badge.textContent = '▶ Continue';
+    card.querySelector('.card-body').appendChild(badge);
+  }
   card.addEventListener('click', e => { if(!e.target.closest('button')) openArticle(a.id); });
   card.querySelector('.btn-card-bk').addEventListener('click', e => { e.stopPropagation(); toggleBk(a.id); });
   card.querySelector('.btn-read-more').addEventListener('click', e => { e.stopPropagation(); openArticle(a.id); });
   if(a.trailerUrl) card.querySelector('.card-trailer-badge')?.addEventListener('click', e => { e.stopPropagation(); openTrailer(a.id); });
+  card.querySelectorAll('.card-show-more').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const dek = document.getElementById('dek-' + btn.dataset.id);
+      if(!dek) return;
+      if(btn.dataset.expanded === 'true') {
+        dek.style.webkitLineClamp = '2';
+        dek.style.overflow = 'hidden';
+        btn.textContent = 'Show more ▾';
+        btn.dataset.expanded = 'false';
+      } else {
+        dek.style.webkitLineClamp = 'unset';
+        dek.style.overflow = 'visible';
+        dek.textContent = btn.dataset.preview + '…';
+        btn.textContent = 'Show less ▴';
+        btn.dataset.expanded = 'true';
+      }
+    });
+  });
   return card;
 }
 
@@ -1131,6 +1188,7 @@ $$('.nav-link[data-section]').forEach(l => l.addEventListener('click', e => {
   STATE.activeTab = t;
   STATE.filterGenre = null;
   STATE.activeCategory = 'All';
+  STATE.industryLang = null;
   // Reset feed title
   const titleEl = $('feed-section-title');
   const descEl  = $('feed-section-desc');
@@ -1157,15 +1215,37 @@ const GENRE_QUERY_MAP = {
 
 /* Industry → Guardian search query map */
 const INDUSTRY_QUERY_MAP = {
-  'Hollywood':      'hollywood film usa american cinema',
-  'Bollywood':      'bollywood india hindi film mumbai',
-  'Tollywood':      'tollywood telugu film andhra telangana',
-  'Kollywood':      'kollywood tamil film chennai kollywood',
-  'Mollywood':      'mollywood malayalam film kerala',
-  'Sandalwood':     'sandalwood kannada film karnataka',
-  'K-Cinema':       'korean cinema film south korea kpop',
-  'British Cinema': 'british film uk cinema london bafta',
-  'Japanese Cinema':'japanese cinema film japan tokyo',
+  'Hollywood':      'hollywood',
+  'Bollywood':      'bollywood india film',
+  'Tollywood':      'telugu film india tollywood allu arjun prabhas',
+  'Kollywood':      'tamil film india kollywood rajinikanth vijay',
+  'Mollywood':      'malayalam film india mollywood fahadh',
+  'Sandalwood':     'kannada film india sandalwood',
+  'K-Cinema':       'korean film',
+  'British Cinema': 'british film',
+  'Japanese Cinema':'japanese film',
+};
+
+/* Industry descriptions shown in feed */
+const INDUSTRY_DESC = {
+  'Hollywood':      "The latest from the world's biggest film industry",
+  'Bollywood':      'Hindi cinema news from Mumbai — the heart of Indian film',
+  'Tollywood':      'Telugu cinema — Allu Arjun, Prabhas, SS Rajamouli and more',
+  'Kollywood':      'Tamil cinema — Rajinikanth, Vijay, and the Chennai film scene',
+  'Mollywood':      'Malayalam cinema — award-winning films from Kerala',
+  'Sandalwood':     'Kannada cinema news from Karnataka',
+  'K-Cinema':       'Korean cinema — from Parasite to the next global hit',
+  'British Cinema': 'British film — from BAFTA to the London film scene',
+  'Japanese Cinema':'Japanese cinema — Studio Ghibli, anime and world cinema',
+};
+
+/* Industry → TMDB language code for regional Indian cinemas */
+const INDUSTRY_LANG_MAP = {
+  'Bollywood':  'hi',
+  'Tollywood':  'te',
+  'Kollywood':  'ta',
+  'Mollywood':  'ml',
+  'Sandalwood': 'kn',
 };
 $$('.mega-link').forEach(l => l.addEventListener('click', e => {
   e.preventDefault();
@@ -1189,14 +1269,16 @@ $$('.mega-link').forEach(l => l.addEventListener('click', e => {
   if(l.dataset.industry) {
     const industry = l.dataset.industry;
     const query = INDUSTRY_QUERY_MAP[industry] || industry + ' film cinema';
+    const langCode = INDUSTRY_LANG_MAP[industry] || null;
     STATE.activeCategory = query;
     STATE.filterGenre = industry;
+    STATE.industryLang = langCode; // store lang code for API call
     STATE.activeTab = 'latest';
     STATE.feedPage = 1;
     const titleEl = $('feed-section-title');
     const descEl  = $('feed-section-desc');
     if(titleEl) titleEl.textContent = industry;
-    if(descEl)  descEl.textContent  = 'Latest news, reviews and stories from ' + industry;
+    if(descEl)  descEl.textContent  = INDUSTRY_DESC[industry] || 'Latest news, reviews and stories from ' + industry;
     syncUI();
     loadFeed();
     $('feed-section')?.scrollIntoView({behavior:'smooth', block:'start'});
@@ -1337,6 +1419,23 @@ async function openArticle(id) {
 
   STATE.openArticle = id;
 
+  // Show "now reading" indicator with simulated count
+  const nrBar = $('now-reading-bar');
+  const nrTxt = $('now-reading-text');
+  if(nrBar && nrTxt) {
+    const count = Math.floor(3 + Math.random() * 28);
+    nrTxt.textContent = count + ' people reading this now';
+    nrBar.classList.remove('hidden');
+    // Slowly decrement to feel live
+    let cur = count;
+    const nrTimer = setInterval(() => {
+      if(!STATE.openArticle) { clearInterval(nrTimer); return; }
+      cur = Math.max(1, cur + Math.floor(Math.random() * 3) - 1);
+      nrTxt.textContent = cur + ' people reading this now';
+    }, 8000);
+    nrBar._timer = nrTimer;
+  }
+
   const bg = document.createElement('div');
   bg.className = 'bg-fill ' + a.grad;
   if(a.img) { bg.style.backgroundImage=`url('${a.img}')`; bg.style.backgroundSize='cover'; bg.style.backgroundPosition='center'; }
@@ -1418,6 +1517,28 @@ async function openArticle(id) {
     el.addEventListener('keydown', e => { if(e.key==='Enter') openArticle(el.dataset.id); });
   });
 
+  // "You might also like" section at the bottom of the article
+  const related = allCached.filter(x => x.id !== id && x.category === a.category).slice(0, 3);
+  const ymalsec = $('art-ymal-sec');
+  if(ymalsec && related.length) {
+    ymalsec.classList.remove('hidden');
+    $('art-ymal-grid').innerHTML = related.map(r => `
+      <div class="ymal-card" data-id="${r.id}" role="button" tabindex="0">
+        <div class="ymal-thumb ${r.grad||'article-bg-grad-2'}" style="${r.img?`background-image:url('${r.img}');background-size:cover;background-position:center`:''}"></div>
+        <div class="ymal-body">
+          <div class="ymal-cat">${r.category}</div>
+          <div class="ymal-title">${r.title}</div>
+          <div class="ymal-time">${ago(r.publishedAt)}</div>
+        </div>
+      </div>`).join('');
+    $('art-ymal-grid').querySelectorAll('.ymal-card').forEach(c => {
+      c.addEventListener('click', () => openArticle(c.dataset.id));
+      c.addEventListener('keydown', e => { if(e.key==='Enter') openArticle(c.dataset.id); });
+    });
+  } else if(ymalsec) {
+    ymalsec.classList.add('hidden');
+  }
+
   syncStickyBk();
   buildComments(a);
 
@@ -1429,7 +1550,9 @@ async function openArticle(id) {
   const bd = $('article-bd');
   bd.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
-  bd.scrollTop = 0;
+  // Restore saved scroll position if exists
+  const savedScroll = parseInt(localStorage.getItem('cw_scroll_' + id) || '0');
+  bd.scrollTop = savedScroll;
   $('article-modal').scrollTop = 0;
 
   const prg = $('scroll-progress-bar');
@@ -1443,6 +1566,11 @@ async function openArticle(id) {
     if(bgEl) bgEl.style.transform = `translateY(${bd.scrollTop * .25}px)`;
     const scrollHeight = bd.scrollHeight - bd.clientHeight;
     if(scrollHeight > 0 && prg) prg.style.width = ((bd.scrollTop/scrollHeight)*100)+'%';
+    // Save reading position every 500ms of scrolling
+    clearTimeout(bd._scrollSaveTimer);
+    bd._scrollSaveTimer = setTimeout(() => {
+      if(STATE.openArticle) localStorage.setItem('cw_scroll_' + STATE.openArticle, bd.scrollTop);
+    }, 500);
   };
 
   log('modal','Opened: '+a.title.slice(0,40));
@@ -1459,10 +1587,20 @@ async function openArticle(id) {
 }
 
 function closeArticle() {
+  // Save final position
+  const bd2 = $('article-bd');
+  if(STATE.openArticle && bd2.scrollTop > 100) {
+    localStorage.setItem('cw_scroll_' + STATE.openArticle, bd2.scrollTop);
+  }
   $('article-bd').classList.add('hidden');
   document.body.style.overflow = '';
   STATE.openArticle = null;
   $('article-sticky-bar').classList.remove('visible');
+  const nrBar = $('now-reading-bar');
+  if(nrBar) {
+    nrBar.classList.add('hidden');
+    if(nrBar._timer) clearInterval(nrBar._timer);
+  }
   log('modal','Closed article');
   // Restore URL
   history.pushState({}, 'CineWire', '/');
@@ -1484,8 +1622,8 @@ function syncStickyBk() {
 }
 $('sticky-bk')?.addEventListener('click', (e) => { e.stopPropagation(); if(!STATE.openArticle) return; toggleBk(STATE.openArticle); syncStickyBk(); });
 $('sticky-share')?.addEventListener('click', (e) => { e.stopPropagation(); openShare(STATE.openArticle); });
-$('sticky-font-dn')?.addEventListener('click', () => { STATE.articleFontScale=Math.max(.8,STATE.articleFontScale-.08); $('article-body-txt').style.fontSize=STATE.articleFontScale+'rem'; });
-$('sticky-font-up')?.addEventListener('click', () => { STATE.articleFontScale=Math.min(1.3,STATE.articleFontScale+.08); $('article-body-txt').style.fontSize=STATE.articleFontScale+'rem'; });
+$('sticky-font-dn')?.addEventListener('click', () => { STATE.articleFontScale=Math.max(.8,STATE.articleFontScale-.08); $('article-body-txt').style.fontSize=STATE.articleFontScale+'rem'; localStorage.setItem('cw_fontscale', STATE.articleFontScale); });
+$('sticky-font-up')?.addEventListener('click', () => { STATE.articleFontScale=Math.min(1.5,STATE.articleFontScale+.08); $('article-body-txt').style.fontSize=STATE.articleFontScale+'rem'; localStorage.setItem('cw_fontscale', STATE.articleFontScale); });
 
 function renderScores(c, aud) {
   if(!c && !aud) { $('art-scores-sec').classList.add('hidden'); return; }
@@ -1585,7 +1723,15 @@ $('lightbox').addEventListener('click', e => { if(e.target===$('lightbox')) clos
    SHARE
    ============================================================ */
 let shareId = null;
-function openShare(id) { shareId=id; $('share-bd').classList.remove('hidden'); log('modal','Share: '+id); }
+function openShare(id) {
+  shareId=id;
+  $('share-bd').classList.remove('hidden');
+  // Show simulated share count for social proof
+  const shareCount = Math.floor(50 + Math.random() * 500);
+  const shareCountEl = $('share-count-display');
+  if(shareCountEl) shareCountEl.textContent = shareCount.toLocaleString() + ' people shared this';
+  log('modal','Share: '+id);
+}
 $('btn-close-share').addEventListener('click', () => $('share-bd').classList.add('hidden'));
 $('share-bd').addEventListener('click', e => { if(e.target===$('share-bd')) $('share-bd').classList.add('hidden'); });
 $$('.share-opt').forEach(b => b.addEventListener('click', async () => {
@@ -1956,6 +2102,21 @@ const PLATFORM_COLORS = {
   'Hulu':       '#1ce783',
   'Peacock':    '#000000',
   'Paramount+': '#0064ff',
+};
+
+// Industry flag map — shown on cards
+const INDUSTRY_FLAGS = {
+  'IN': '🇮🇳', 'JP': '🇯🇵', 'KR': '🇰🇷', 'GB': '🇬🇧',
+  'US': '🇺🇸', 'FR': '🇫🇷', 'IT': '🇮🇹', 'DE': '🇩🇪',
+  'GL': '', 'CN': '🇨🇳', 'AU': '🇦🇺', 'BR': '🇧🇷',
+};
+const CATEGORY_FLAGS = {
+  'Bollywood': '🇮🇳', 'Tollywood': '🇮🇳', 'Kollywood': '🇮🇳',
+  'Mollywood': '🇮🇳', 'Sandalwood': '🇮🇳',
+  'K-Cinema': '🇰🇷', 'Korean': '🇰🇷',
+  'Japanese Cinema': '🇯🇵', 'Anime': '🇯🇵',
+  'British Cinema': '🇬🇧',
+  'Hollywood': '🇺🇸',
 };
 
 function buildStreaming() {

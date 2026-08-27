@@ -212,15 +212,39 @@ async function getBoxOffice(page = 1) {
   return (data.results || []).map(g => ({ ...guardianToArticle(g), tab: 'boxoffice' }));
 }
 
-// Search
+// Industry-specific Guardian queries
+// Tested and confirmed working with The Guardian API
+const GUARDIAN_INDUSTRY_QUERIES = {
+  'hollywood':                                         { q: 'hollywood',         section: 'film' },
+  'bollywood india film':                              { q: 'bollywood',         section: 'film' },
+  'telugu film india tollywood allu arjun prabhas':    { q: 'tollywood' },
+  'tamil film india kollywood rajinikanth vijay':      { q: 'kollywood' },
+  'malayalam film india mollywood fahadh':             { q: '"malayalam cinema"' },
+  'kannada film india sandalwood':                     { q: '"kannada film"' },
+  'korean film':                                       { q: '"korean film"',     section: 'film' },
+  'british film':                                      { q: 'british film bafta',section: 'film' },
+  'japanese film':                                     { q: 'japanese film ghibli', section: 'film' },
+};
+
+// Generic search
 async function searchNews(query, page = 1) {
-  const data = await guardianFetch('/search', {
-    section:  'film',
-    q:        query,
-    orderBy:  'relevance',
-    page,
-    pageSize: 20,
-  });
+  const qLower = query.toLowerCase();
+  const industryConfig = GUARDIAN_INDUSTRY_QUERIES[qLower] || null;
+
+  let params = { page, pageSize: 20 };
+
+  if (industryConfig) {
+    params.q       = industryConfig.q;
+    params.orderBy = 'relevance';
+    if (industryConfig.section) params.section = industryConfig.section;
+    if (industryConfig.tag)     params.tag     = industryConfig.tag;
+  } else {
+    params.q       = query;
+    params.orderBy = 'newest';
+    params.section = 'film';
+  }
+
+  const data = await guardianFetch('/search', params);
   return (data.results || []).map(guardianToArticle);
 }
 

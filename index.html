@@ -6,7 +6,7 @@
   <title>CineWire — Global Movie News</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=24">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#e50914">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -192,6 +192,7 @@
 <div class="modal-bd hidden" id="share-bd">
   <div class="modal-card share-card">
     <div class="mc-head"><h3>Share Story</h3><button class="mc-close" id="btn-close-share">&times;</button></div>
+    <p id="share-count-display" style="font-size:.78rem;color:var(--text-3);text-align:center;margin-bottom:8px"></p>
     <div class="share-grid">
       <button class="share-opt" data-share="native">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -269,6 +270,10 @@
 <div class="modal-bd article-modal-bd hidden" id="article-bd">
   <div class="article-modal" id="article-modal" role="dialog" aria-modal="true">
     <button class="article-close-btn" id="btn-close-article">&times;</button>
+    <div class="now-reading-bar hidden" id="now-reading-bar">
+      <span class="now-reading-dot"></span>
+      <span id="now-reading-text">12 people reading this now</span>
+    </div>
     <div class="article-hero-img" id="article-hero-img">
       <div class="article-hero-grad"></div>
       <div class="article-hero-content">
@@ -305,6 +310,10 @@
             <div class="comment-form-btns hidden" id="comment-form-btns"><button type="submit" class="btn-sm-red">Post</button><button type="button" id="btn-cancel-comment" class="btn-sm-ghost">Cancel</button></div>
           </form>
           <div id="comments-list" class="comments-list"></div>
+        </div>
+        <div class="article-section hidden" id="art-ymal-sec">
+          <h3 class="sec-h" style="margin-bottom:16px">You Might Also Like</h3>
+          <div class="ymal-grid" id="art-ymal-grid"></div>
         </div>
         <div class="art-nav-row"><button class="art-nav-btn" id="btn-art-prev">&#8592; Previous</button><button class="art-nav-btn art-nav-primary" id="btn-art-next">Next &#8594;</button></div>
       </div>
@@ -642,7 +651,7 @@
   </div>
 </div>
 
-<script src="translation.js?v=11"></script>
-<script src="app.js?v=11"></script>
+<script src="translation.js?v=24"></script>
+<script src="app.js?v=24"></script>
 </body>
 </html>

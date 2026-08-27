@@ -195,11 +195,51 @@ app.get('/api/news/boxoffice', async (req, res) => {
   res.json({ success:true, source:'local', count:0, data:[] });
 });
 
+// Industry → TMDB language codes for regional Indian cinema
+const INDUSTRY_LANG_CODES = {
+  'te': ['telugu','tollywood'],
+  'ta': ['tamil','kollywood'],
+  'ml': ['malayalam','mollywood'],
+  'kn': ['kannada','sandalwood'],
+  'hi': ['hindi','bollywood'],
+};
+
 app.get('/api/news/category/:category', async (req, res) => {
   const { category } = req.params;
   const page = parseInt(req.query.page) || 1;
+  const lang = req.query.lang || null;
 
-  // Guardian takes priority — search by the category query string
+  // 1. TMDB language discovery (best for regional Indian cinemas)
+  if (lang && TMDB_ON) {
+    try {
+      const data = await tmdb.cached(`lang_${lang}_${page}`, async () => {
+        const fetch = require('node-fetch');
+        const url = `https://api.themoviedb.org/3/discover/movie?with_original_language=${lang}&sort_by=popularity.desc&page=${page}`;
+        const r = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${process.env.TMDB_API_KEY}`, 'accept': 'application/json' }
+        });
+        if (!r.ok) throw new Error(`TMDB discover error: ${r.status}`);
+        const d = await r.json();
+        return (d.results || []).map(m => tmdb.movieToArticle(m, 'latest'));
+      });
+      if (data && data.length > 0) {
+        return res.json({ success:true, source:'tmdb_lang', category, lang, count:data.length, data });
+      }
+    } catch(e) {
+      console.error('TMDB lang discover:', e.message);
+      // Try TMDB search as fallback
+      try {
+        const searchData = await tmdb.cached(`tmdb_search_${category}_${page}`, () => tmdb.searchMovies(category, page));
+        if (searchData && searchData.length > 0) {
+          return res.json({ success:true, source:'tmdb_search', category, count:searchData.length, data:searchData });
+        }
+      } catch(e2) {
+        console.error('TMDB search fallback:', e2.message);
+      }
+    }
+  }
+
+  // 2. Guardian search (for Hollywood, K-Cinema, British, Japanese)
   if (guardian.ON) {
     try {
       const data = await guardian.cached(`gcat_${category}_${page}`, () => guardian.searchNews(category, page));
@@ -211,7 +251,7 @@ app.get('/api/news/category/:category', async (req, res) => {
     }
   }
 
-  // TMDB fallback
+  // 3. TMDB keyword search fallback
   if (TMDB_ON) {
     try {
       const data = await tmdb.cached(`cat_${category}_${page}`, () => tmdb.getCategory(category, page));
@@ -223,9 +263,11 @@ app.get('/api/news/category/:category', async (req, res) => {
     }
   }
 
-  // Local fallback
-  const cat  = category.toLowerCase();
-  const filtered = LOCAL_ARTICLES.filter(a => a.category.toLowerCase()===cat || a.tags.some(t=>t.toLowerCase()===cat));
+  // 4. Local fallback
+  const cat = category.toLowerCase();
+  const filtered = LOCAL_ARTICLES.filter(a =>
+    a.category.toLowerCase()===cat || a.tags.some(t=>t.toLowerCase()===cat)
+  );
   res.json({ success:true, source:'local', category, count:filtered.length, data: filtered.length ? filtered : LOCAL_ARTICLES });
 });
 
