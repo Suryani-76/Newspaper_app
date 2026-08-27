@@ -1,0 +1,10 @@
+# Netlify Configuration File
+# Configures the build and routing redirects for CineWire static client app
+
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineWire — Global Movie News</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#e50914">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CineWire">
+  <meta name="description" content="The world's cinema, in your hands. Breaking movie news, reviews, box office and more.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23e50914'/><text x='16' y='23' font-size='20' text-anchor='middle' font-family='Arial Black,sans-serif' fill='white' font-weight='900'>C</text></svg>">
+  <meta property="og:title" content="CineWire — Global Movie News">
+  <meta property="og:description" content="The world's cinema, in your hands.">
+  <meta property="og:image" content="https://placehold.co/1200x630/e50914/ffffff?text=CineWire">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<div id="app-loader" class="app-loader">
+  <div class="app-loader-logo"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></div>
+  <div class="app-loader-bar"><div class="app-loader-fill"></div></div>
+</div>
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<svg style="display:none;">
+  <defs>
+    <linearGradient id="critic-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e50914"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="audience-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div id="page-progress" style="position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;pointer-events:none;"><div id="page-progress-fill" style="height:100%;width:0%;background:var(--red);transition:width .1s ease-out;box-shadow:0 0 8px rgba(229,9,20,.5);"></div></div>
+
+
+<!-- ===== HEADER ===== -->
+<header class="app-header" id="app-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <a href="#" class="logo" id="logo-home"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></a>
+      <nav class="primary-nav">
+        <a href="#" class="nav-link active" data-section="home" data-i18n="home">Home</a>
+        <a href="#" class="nav-link" data-section="trending" data-i18n="trending">Trending</a>
+        <a href="#" class="nav-link" data-section="reviews" data-i18n="reviews">Reviews</a>
+        <a href="#" class="nav-link" data-section="boxoffice" data-i18n="boxOffice">Box Office</a>
+        <div class="nav-has-mega">
+          <a href="#" class="nav-link">Categories <span class="nav-chevron">&#9660;</span></a>
+          <div class="mega-menu">
+            <div class="mega-col">
+              <div class="mega-heading">Genres</div>
+              <a href="#" class="mega-link" data-genre="Action">Action</a>
+              <a href="#" class="mega-link" data-genre="Horror">Horror</a>
+              <a href="#" class="mega-link" data-genre="Sci-Fi">Sci-Fi</a>
+              <a href="#" class="mega-link" data-genre="Drama">Drama</a>
+              <a href="#" class="mega-link" data-genre="Thriller">Thriller</a>
+              <a href="#" class="mega-link" data-genre="Animation">Animation</a>
+              <a href="#" class="mega-link" data-genre="Anime">Anime</a>
+              <div class="mega-divider"></div>
+              <a href="#" class="mega-link" data-section="awards">Awards</a>
+              <a href="#" class="mega-link" data-section="streaming">Streaming</a>
+            </div>
+          </div>
+        </div>
+        <div class="nav-has-mega">
+          <a href="#" class="nav-link">Industry <span class="nav-chevron">&#9660;</span></a>
+          <div class="mega-menu mega-menu--wide">
+            <div class="mega-col">
+              <div class="mega-heading">Global Cinema</div>
+              <a href="#" class="mega-link" data-industry="Hollywood">🎬 Hollywood</a>
+              <a href="#" class="mega-link" data-industry="Bollywood">🎭 Bollywood</a>
+              <a href="#" class="mega-link" data-industry="Tollywood">🌟 Tollywood</a>
+              <a href="#" class="mega-link" data-industry="Kollywood">🎵 Kollywood</a>
+              <a href="#" class="mega-link" data-industry="Mollywood">🌴 Mollywood</a>
+              <a href="#" class="mega-link" data-industry="Sandalwood">🌿 Sandalwood</a>
+              <a href="#" class="mega-link" data-industry="K-Cinema">🇰🇷 K-Cinema</a>
+              <a href="#" class="mega-link" data-industry="British Cinema">🇬🇧 British Cinema</a>
+              <a href="#" class="mega-link" data-industry="Japanese Cinema">🇯🇵 Japanese Cinema</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </div>
+    <div class="header-right">
+
+      <button id="btn-region-pill" class="region-pill" aria-label="Select region">
+        <span class="region-code" id="region-pill-code">GL</span>
+        <span id="region-pill-name">Global</span>
+        <span class="pill-chevron">&#9660;</span>
+      </button>
+      <div class="hdr-action-grp">
+        <button id="btn-notif" class="btn-icon" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="badge-dot" id="notif-badge">3</span>
+        </button>
+        <div class="hdr-dropdown hidden" id="notif-dropdown">
+          <div class="dd-head-row"><strong>Notifications</strong><button id="btn-mark-read" class="btn-text-xs">Mark read</button></div>
+          <div id="notif-list" class="notif-list"></div>
+        </div>
+      </div>
+      <button id="btn-bookmarks" class="btn-icon" aria-label="Saved">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span class="badge-num hidden" id="bookmarks-badge">0</span>
+      </button>
+      <button id="btn-theme" class="btn-theme" aria-label="Toggle theme">
+        <span class="th-s">☀</span><div class="th-knob"></div><span class="th-d">☾</span>
+      </button>
+      <div class="hdr-action-grp">
+        <button id="btn-user-menu" class="btn-avatar" aria-label="User menu"><span id="user-av">U</span></button>
+        <div class="hdr-dropdown hidden" id="user-dropdown">
+          <div class="user-dd-top">
+            <div class="user-av-lg" id="user-av-lg">U</div>
+            <div><div id="user-name-dd" style="font-weight:700">Guest</div><div id="user-email-dd" style="font-size:.72rem;color:var(--text-2)">guest@cinewire.com</div></div>
+          </div>
+          <a href="#" class="dd-item" data-i18n="myProfile">My Profile</a>
+          <a href="#" class="dd-item" data-i18n="myWatchlist">My Watchlist</a>
+          <a href="#" class="dd-item" data-i18n="preferences">Preferences</a>
+          <div class="dd-divider"></div>
+          <button id="btn-signout" class="dd-item dd-danger" data-i18n="signOut">Sign Out</button>
+        </div>
+      </div>
+      <button id="btn-signin-header" class="btn-signin hidden" data-i18n="signIn">Sign In</button>
+      <button id="btn-hamburger" class="btn-hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+
+</header>
+
+<!-- ===== MOBILE NAV ===== -->
+<div class="mob-nav hidden" id="mob-nav">
+  <div class="mob-nav-top">
+    <a class="logo" href="#"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></a>
+    <button id="btn-mob-close" class="btn-close-x">&times;</button>
+  </div>
+  <a href="#" class="mob-link" data-section="home" data-i18n="home">Home</a>
+  <a href="#" class="mob-link" data-section="trending" data-i18n="trending">Trending</a>
+  <a href="#" class="mob-link" data-section="reviews" data-i18n="reviews">Reviews</a>
+  <a href="#" class="mob-link" data-section="boxoffice" data-i18n="boxOffice">Box Office</a>
+  <a href="#" class="mob-link" data-section="streaming" data-i18n="streaming">Streaming</a>
+  <div class="mob-region-wrap">
+    <button id="btn-mob-region" class="region-pill region-pill-full">
+      <span id="mob-region-code">GL</span><span id="mob-region-name">Global</span>
+    </button>
+  </div>
+</div>
+<div class="overlay hidden" id="mob-overlay"></div>
+
+<!-- ===== AUTH MODAL ===== -->
+<div class="modal-bd hidden" id="auth-bd">
+  <div class="modal-card">
+    <button class="mc-close" id="btn-close-auth">&times;</button>
+    <div class="mc-logo"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></div>
+    <h2 class="mc-title" data-i18n="signIn">Sign In</h2>
+    <div class="social-btns">
+      <button class="btn-soc-g" id="btn-login-google">Continue with Google</button>
+      <button class="btn-soc-f" id="btn-login-facebook">Continue with Facebook</button>
+      <button class="btn-soc-x" id="btn-login-twitter">Continue with X</button>
+    </div>
+    <div class="auth-or-line"><span data-i18n="or">or</span></div>
+    <form id="auth-form" class="auth-form">
+      <label class="field-label">Email<input type="email" id="auth-email" placeholder="you@example.com" required></label>
+      <label class="field-label">Password<input type="password" id="auth-password" placeholder="••••••••" required></label>
+      <button type="submit" class="btn-primary btn-block" data-i18n="signIn">Sign In</button>
+    </form>
+    <div class="mc-footer"><button id="btn-auth-guest" class="btn-link-sm" data-i18n="continueAsGuest">Continue as Guest</button></div>
+  </div>
+</div>
+
+<!-- ===== REGION MODAL ===== -->
+<div class="modal-bd hidden" id="region-bd">
+  <div class="modal-card region-card">
+    <div class="mc-head"><h2 data-i18n="selectRegion">Select Region</h2><button class="mc-close" id="btn-close-region">&times;</button></div>
+    <input type="search" id="region-search" placeholder="Search countries..." style="width:100%;padding:10px;margin-bottom:16px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg-card);color:var(--text);font-size:.9rem;outline:none;">
+    <div class="sec-label" data-i18n="yourRegions">Your Regions</div>
+    <div id="region-your-list" class="region-chips-wrap"></div>
+    <div class="sec-label" data-i18n="allCountries">All Countries</div>
+    <div id="region-all-list" class="region-all-wrap"></div>
+    <div class="mc-foot"><button id="btn-region-apply" class="btn-primary" data-i18n="apply">Apply</button><button id="btn-region-cancel" class="btn-ghost-sm" data-i18n="cancel">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ===== SHARE MODAL ===== -->
+<div class="modal-bd hidden" id="share-bd">
+  <div class="modal-card share-card">
+    <div class="mc-head"><h3>Share Story</h3><button class="mc-close" id="btn-close-share">&times;</button></div>
+    <p id="share-count-display" style="font-size:.78rem;color:var(--text-3);text-align:center;margin-bottom:8px"></p>
+    <div class="share-grid">
+      <button class="share-opt" data-share="native">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Share
+      </button>
+      <button class="share-opt" data-share="copy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Copy Link
+      </button>
+      <button class="share-opt" data-share="twitter">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        X / Twitter
+      </button>
+      <button class="share-opt" data-share="whatsapp">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button class="share-opt" data-share="facebook">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        Facebook
+      </button>
+      <button class="share-opt" data-share="reddit">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+        Reddit
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TRAILER MODAL ===== -->
+<div class="modal-bd hidden" id="trailer-bd">
+  <div class="trailer-card">
+    <button class="mc-close" id="btn-close-trailer">&times;</button>
+    <div class="trailer-screen" id="trailer-screen">
+      <div class="trailer-bg" id="trailer-bg"></div>
+      <div class="trailer-ui">
+        <div class="trailer-title-txt" id="trailer-title-txt"></div>
+        <div class="trailer-ctrl-row">
+          <button class="t-btn" id="btn-t-play">&#9654;</button>
+          <div class="t-bar"><div class="t-fill" id="t-fill"></div></div>
+          <button class="t-btn" id="btn-t-mute">Vol</button>
+          <button class="t-btn" id="btn-t-fs">[ ]</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOOKMARKS DRAWER ===== -->
+<div class="bookmarks-drawer hidden" id="bookmarks-drawer">
+  <div class="drawer-head">
+    <h3 data-i18n="savedArticles">Saved Articles</h3>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="btn-bk-sort" class="btn-text-xs">Newest</button>
+      <button id="btn-bk-clear" class="btn-text-xs" style="color:var(--red)">Clear All</button>
+      <button id="btn-close-drawer" class="btn-close-x">&times;</button>
+    </div>
+  </div>
+  <div class="drawer-tabs"><button class="dr-tab active" data-filter="all">All</button></div>
+  <div class="drawer-scroll" id="drawer-scroll">
+    <div class="drawer-empty" id="drawer-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <h4>No saved articles</h4><p>Click the bookmark icon on any card to save it.</p>
+    </div>
+  </div>
+  <div class="confirm-strip hidden" id="confirm-clear">
+    <span>Clear all saved articles?</span>
+    <button id="btn-do-clear" class="btn-sm-red">Yes</button>
+    <button id="btn-no-clear" class="btn-sm-ghost">No</button>
+  </div>
+</div>
+<div class="overlay hidden" id="drawer-overlay"></div>
+
+<!-- ===== ARTICLE MODAL ===== -->
+<div class="modal-bd article-modal-bd hidden" id="article-bd">
+  <div class="article-modal" id="article-modal" role="dialog" aria-modal="true">
+    <button class="article-close-btn" id="btn-close-article">&times;</button>
+    <div class="now-reading-bar hidden" id="now-reading-bar">
+      <span class="now-reading-dot"></span>
+      <span id="now-reading-text">12 people reading this now</span>
+    </div>
+    <div class="article-hero-img" id="article-hero-img">
+      <div class="article-hero-grad"></div>
+      <div class="article-hero-content">
+        <span class="art-cat-badge" id="art-cat-badge"></span>
+        <h1 class="art-title" id="art-title"></h1>
+        <div class="art-meta-row"><span id="art-author-chip"></span><span id="art-time"></span><span id="art-read-time"></span></div>
+      </div>
+    </div>
+    <div class="article-sticky-bar" id="article-sticky-bar">
+      <div class="scroll-progress-bar" id="scroll-progress-bar"></div>
+      <div class="sticky-inner">
+        <div class="sticky-title" id="sticky-title"></div>
+        <div class="sticky-actions">
+          <button class="s-act" id="sticky-bk" aria-label="Bookmark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+          <button class="s-act" id="sticky-share" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+          <button class="s-act hidden" id="sticky-font-dn" aria-label="Decrease font">A-</button>
+          <button class="s-act hidden" id="sticky-font-up" aria-label="Increase font">A+</button>
+        </div>
+      </div>
+    </div>
+    <div class="article-body-wrap">
+      <div class="article-main-col">
+        <div class="article-body-txt" id="article-body-txt"></div>
+        <div class="article-section hidden" id="art-gallery-sec"><h3 class="sec-h">Photo Gallery</h3><div class="gallery-grid" id="art-gallery-grid"></div></div>
+        <div class="article-section" id="art-scores-sec"><h3 class="sec-h">Scores</h3><div class="scores-row" id="art-scores-row"></div></div>
+        <div class="article-section hidden" id="art-cast-sec"><h3 class="sec-h">Cast &amp; Crew</h3><div class="cast-row" id="art-cast-row"></div></div>
+        <div class="article-section hidden" id="art-tags-sec"><h3 class="sec-h">Tags</h3><div class="tags-row" id="art-tags-row"></div></div>
+        <div class="article-section hidden" id="art-related-sec"><h3 class="sec-h">Related Productions</h3><div class="related-row" id="art-related-row"></div></div>
+        <div class="article-section" id="art-comments-sec">
+          <h3 class="sec-h">Discussion (<span id="comments-count">0</span>)</h3>
+          <div class="comment-sort-bar"><button class="csort active" data-sort="top">Top</button><button class="csort" data-sort="newest">Newest</button></div>
+          <form id="comment-form" class="comment-form">
+            <div class="comment-input-row"><div class="comment-av-sm" id="comment-av">G</div><input type="text" id="comment-input" class="comment-input" placeholder="Share your thoughts..."></div>
+            <div class="comment-form-btns hidden" id="comment-form-btns"><button type="submit" class="btn-sm-red">Post</button><button type="button" id="btn-cancel-comment" class="btn-sm-ghost">Cancel</button></div>
+          </form>
+          <div id="comments-list" class="comments-list"></div>
+        </div>
+        <div class="article-section hidden" id="art-ymal-sec">
+          <h3 class="sec-h" style="margin-bottom:16px">You Might Also Like</h3>
+          <div class="ymal-grid" id="art-ymal-grid"></div>
+        </div>
+        <div class="art-nav-row"><button class="art-nav-btn" id="btn-art-prev">&#8592; Previous</button><button class="art-nav-btn art-nav-primary" id="btn-art-next">Next &#8594;</button></div>
+      </div>
+      <aside class="article-sidebar-col">
+        <div id="art-movie-card" class="art-movie-card"></div>
+        <div class="sidebar-sec hidden" id="art-streaming-sec"><div class="sidebar-sec-lbl">WHERE TO WATCH</div><div id="art-streaming-logos" class="streaming-logos-row"></div></div>
+        <div class="sidebar-sec" id="art-more-sec"><div class="sidebar-sec-lbl">MORE LIKE THIS</div><div id="art-more-list" class="more-list"></div></div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LIGHTBOX ===== -->
+<div class="lightbox hidden" id="lightbox">
+  <button class="lightbox-close" id="btn-lbox-close">&times;</button>
+  <div id="lbox-img-wrap" class="lbox-img-wrap"></div>
+  <button class="lbox-nav lbox-prev" id="btn-lbox-prev">&#8249;</button>
+  <button class="lbox-nav lbox-next" id="btn-lbox-next">&#8250;</button>
+</div>
+
+<!-- ===== ONBOARDING SPLASH ===== -->
+<div id="onboarding-screen" class="flow-screen hidden">
+  <div class="flow-center">
+    <div class="flow-logo"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></div>
+    <div class="onboard-art">🎬</div>
+    <h1 class="flow-title">Discover trending movie updates here</h1>
+    <p class="flow-sub">Stay updated with the latest news, reviews and entertainment from global cinema.</p>
+    <button id="btn-get-started" class="btn-primary btn-block flow-cta">Get Started</button>
+    <button id="btn-skip-onboard" class="btn-link-sm flow-skip">Skip for now</button>
+  </div>
+</div>
+
+<!-- ===== AUTH SCREEN ===== -->
+<div id="auth-screen" class="flow-screen hidden">
+  <div class="flow-card">
+    <button id="btn-auth-back" class="flow-back">&#8592; Back</button>
+    <div class="flow-logo"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></div>
+
+    <div id="auth-signin-view">
+      <h2 class="flow-title">Welcome Back</h2>
+      <p class="flow-sub">Sign in to continue reading CineWire.</p>
+      <div class="social-btns" style="margin-bottom:18px">
+        <button class="btn-soc-g" id="btn-gs-google">Continue with Google</button>
+        <button class="btn-soc-f" id="btn-gs-facebook">Continue with Facebook</button>
+      </div>
+      <div class="auth-or-line"><span>or</span></div>
+      <form id="signin-form" class="auth-form">
+        <label class="field-label">Email<input type="email" id="signin-email" placeholder="you@example.com" required></label>
+        <label class="field-label">Password<input type="password" id="signin-password" placeholder="••••••••" required></label>
+        <div class="signin-options">
+          <label class="remember-me"><input type="checkbox" id="remember-me"> Remember me</label>
+          <button type="button" class="btn-link-sm" style="font-size:.8rem">Forgot Password?</button>
+        </div>
+        <button type="submit" class="btn-primary btn-block">Sign In</button>
+      </form>
+      <p class="flow-switch">Don't have an account? <button id="btn-show-register" class="btn-link-sm">Create Account</button></p>
+    </div>
+
+    <div id="auth-register-view" class="hidden">
+      <h2 class="flow-title">Create Your Account</h2>
+      <p class="flow-sub">Personalize your news experience.</p>
+      <form id="register-form" class="auth-form">
+        <label class="field-label">Full Name<input type="text" id="reg-name" placeholder="Your full name" required></label>
+        <label class="field-label">Email<input type="email" id="reg-email" placeholder="you@example.com" required></label>
+        <label class="field-label">Password<input type="password" id="reg-password" placeholder="••••••••" required></label>
+        <label class="field-label">Confirm Password<input type="password" id="reg-confirm" placeholder="••••••••" required></label>
+        <button type="submit" class="btn-primary btn-block">Create Account</button>
+      </form>
+      <p class="flow-switch">Already have an account? <button id="btn-show-signin" class="btn-link-sm">Sign In</button></p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OTP VERIFICATION ===== -->
+<div id="otp-screen" class="flow-screen hidden">
+  <div class="flow-card">
+    <button id="btn-otp-back" class="flow-back">&#8592; Back</button>
+    <div class="flow-logo"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></div>
+    <div class="otp-emoji">📧</div>
+    <h2 class="flow-title">Verification Code</h2>
+    <p class="flow-sub" id="otp-sub-text">We sent a 6-digit code to your email.</p>
+    <div class="otp-inputs" id="otp-inputs">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+    </div>
+    <p class="otp-hint">Enter any 6 digits to continue</p>
+    <button id="btn-verify-otp" class="btn-primary btn-block" style="margin-top:20px;max-width:320px">Verify Code</button>
+    <p class="flow-switch" style="margin-top:12px">Didn't receive it? <button id="btn-resend-otp" class="btn-link-sm">Resend Code</button></p>
+  </div>
+</div>
+
+<!-- ===== SELECT LANGUAGE ===== -->
+<div id="select-lang-screen" class="flow-screen hidden">
+  <div class="flow-card flow-card--wide">
+    <div class="flow-logo"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></div>
+    <h2 class="flow-title">Choose Your Language</h2>
+    <p class="flow-sub">Get news in your preferred language</p>
+    <div class="sel-lang-grid" id="sel-lang-grid">
+      <button class="sel-lang-btn active" data-lang="en"><span class="sel-flag">🇺🇸</span><span>English</span></button>
+      <button class="sel-lang-btn" data-lang="te"><span class="sel-flag">🇮🇳</span><span>Telugu</span></button>
+      <button class="sel-lang-btn" data-lang="hi"><span class="sel-flag">🇮🇳</span><span>Hindi</span></button>
+      <button class="sel-lang-btn" data-lang="ta"><span class="sel-flag">🇮🇳</span><span>Tamil</span></button>
+      <button class="sel-lang-btn" data-lang="kn"><span class="sel-flag">🇮🇳</span><span>Kannada</span></button>
+    </div>
+    <button id="btn-lang-continue" class="btn-primary btn-block" style="max-width:320px;margin:28px auto 0">Continue →</button>
+  </div>
+</div>
+
+<!-- ===== MAIN PAGE ===== -->
+<main class="main-page" id="main-page">
+
+  <!-- HERO SECTION -->
+  <section class="hero-section" id="hero-section">
+    <div class="hero-slider" id="hero-slider">
+      <div class="hero-slides" id="hero-slides"></div>
+      <button class="hero-btn-prev" id="hero-prev" aria-label="Previous slide">&#8249;</button>
+      <button class="hero-btn-next" id="hero-next" aria-label="Next slide">&#8250;</button>
+      <div class="hero-dots" id="hero-dots"></div>
+      <button class="hero-pause-btn" id="hero-pause" aria-label="Pause slideshow">&#9646;&#9646;</button>
+    </div>
+  </section>
+
+  <!-- TRENDING NOW -->
+  <section class="trending-section" id="trending-section">
+    <div class="sec-container">
+      <div class="section-hdr">
+        <h2 class="section-title">Trending Now</h2>
+        <div class="rail-arrows">
+          <button class="rail-btn" id="trend-prev" aria-label="Previous">&#8249;</button>
+          <button class="rail-btn" id="trend-next" aria-label="Next">&#8250;</button>
+        </div>
+      </div>
+      <div class="trending-rail-wrap"><div class="trending-rail" id="trending-rail"></div></div>
+    </div>
+  </section>
+
+  <!-- TODAY'S TOP NEWS — Latest feed (full grid, tabbed) -->
+  <section class="feed-section" id="feed-section">
+    <div class="sec-container">
+      <div class="feed-header-row">
+        <div class="feed-title-wrap">
+          <h2 class="feed-section-title" id="feed-section-title">Today's Top News</h2>
+          <p class="feed-section-desc" id="feed-section-desc">Breaking news, exclusives and the freshest stories from global cinema</p>
+        </div>
+        <div class="feed-meta">
+          <div class="region-chip" id="feed-region-chip">
+            <span class="region-code" id="chip-code">GL</span>
+            <span id="chip-name">Global</span>
+            <button class="chip-x" id="chip-clear">&times;</button>
+          </div>
+          <select id="sort-select" class="sort-sel">
+            <option value="newest">Newest</option>
+            <option value="popular">Most Popular</option>
+            <option value="discussed">Most Discussed</option>
+            <option value="editors">Editor's Picks</option>
+          </select>
+          <div class="view-btns">
+            <button id="btn-view-grid" class="vbtn active" aria-label="Grid view">&#9632;&#9632;</button>
+            <button id="btn-view-list" class="vbtn" aria-label="List view">&#8801;</button>
+          </div>
+        </div>
+      </div>
+      <div class="feed-tabs" id="feed-tabs">
+        <button class="feed-tab active" data-tab="latest">Latest</button>
+        <button class="feed-tab" data-tab="trending">Trending</button>
+        <button class="feed-tab" data-tab="reviews">Reviews</button>
+        <button class="feed-tab" data-tab="boxoffice">Box Office</button>
+      </div>
+      <div id="articles-grid" class="articles-grid grid-view"></div>
+      <div id="scroll-sentinel" style="height:1px"></div>
+      <div id="load-more-wrap" class="load-more-wrap hidden">
+        <button id="btn-load-more" class="btn-load-more">Load More</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHERE TO WATCH -->
+  <section class="streaming-sec" id="streaming-sec">
+    <div class="sec-container">
+      <div class="section-hdr">
+        <h2 class="section-title" data-i18n="whereToWatch">Where to Watch</h2>
+        <div class="rail-arrows">
+          <button class="rail-btn" id="stream-prev" aria-label="Previous">&#8249;</button>
+          <button class="rail-btn" id="stream-next" aria-label="Next">&#8250;</button>
+        </div>
+      </div>
+      <div class="streaming-rail-wrap">
+        <div id="streaming-cards" class="streaming-rail"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo"><span class="logo-c">Cine</span><span class="logo-w">Wire</span></div>
+        <p class="footer-tag">The world's cinema, in your hands.</p>
+        <div class="footer-socials">
+          <a href="#" class="soc-icon" aria-label="X/Twitter">&#120143;</a>
+          <a href="#" class="soc-icon" aria-label="LinkedIn">in</a>
+          <a href="#" class="soc-icon" aria-label="YouTube">&#9654;</a>
+          <a href="#" class="soc-icon" aria-label="Facebook">f</a>
+        </div>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <div class="footer-col-h" data-i18n="company">Company</div>
+          <a href="#" class="footer-link" data-i18n="about">About</a>
+          <a href="#" class="footer-link" data-i18n="careers">Careers</a>
+          <a href="#" class="footer-link" data-i18n="press">Press</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-h">Categories</div>
+          <a href="#" class="footer-link" data-genre="Horror">Horror</a>
+          <a href="#" class="footer-link" data-genre="Action">Action</a>
+          <a href="#" class="footer-link" data-genre="Sci-Fi">Sci-Fi</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-h" data-i18n="legal">Legal</div>
+          <a href="#" class="footer-link" data-i18n="privacy">Privacy</a>
+          <a href="#" class="footer-link" data-i18n="terms">Terms</a>
+          <a href="#" class="footer-link" data-i18n="cookies">Cookies</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-h" data-i18n="connect">Connect</div>
+          <a href="#" class="footer-link" data-i18n="newsletter">Newsletter</a>
+          <a href="#" class="footer-link" data-i18n="contact">Contact</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 CineWire Global Media</span>
+      <select class="lang-sel" id="lang-select">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="ja">日本語</option>
+        <option value="ko">한국어</option>
+        <option value="fr">Français</option>
+      </select>
+    </div>
+  </footer>
+  <div id="category-chips" style="display:none"></div>
+  <div class="ptr-indicator" id="ptr-indicator">↓ Release to refresh</div>
+</main>
+
+<!-- ===== STREAMING DETAIL MODAL ===== -->
+<div class="modal-bd hidden" id="stream-bd">
+  <div class="modal-card stream-detail-card">
+    <button class="mc-close" id="btn-close-stream">&times;</button>
+    <div class="stream-detail-poster" id="stream-detail-poster"></div>
+    <div class="stream-detail-body">
+      <div class="stream-detail-platform" id="stream-detail-platform"></div>
+      <h2 class="stream-detail-title" id="stream-detail-title"></h2>
+      <div class="stream-detail-meta" id="stream-detail-meta"></div>
+      <p class="stream-detail-desc" id="stream-detail-desc"></p>
+      <a class="stream-detail-btn" id="stream-detail-btn" href="#" target="_blank" rel="noopener">
+        <span id="stream-detail-btn-txt">Watch Now</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <div class="stream-also-on hidden" id="stream-also-on">
+        <div class="stream-also-lbl">Also on this platform</div>
+        <div class="stream-also-chips" id="stream-also-chips"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== BOTTOM MOBILE NAV ===== -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bottom-nav-item active" data-section="home" id="bnav-home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="bottom-nav-item" data-section="trending" id="bnav-trending">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    <span>Trending</span>
+  </button>
+  <button class="bottom-nav-item" data-section="categories" id="bnav-categories">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span>Categories</span>
+  </button>
+  <button class="bottom-nav-item" data-section="saved" id="bnav-saved">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+    <span>Saved</span>
+    <span class="bnav-badge hidden" id="bnav-saved-badge">0</span>
+  </button>
+  <button class="bottom-nav-item" data-section="profile" id="bnav-profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Profile</span>
+  </button>
+</nav>
+
+<button class="back-top hidden" id="back-top" aria-label="Back to top">&#8593;</button>
+
+<!-- DEV PANEL -->
+<div class="dev-panel" id="dev-panel">
+  <div class="dev-handle" id="dev-handle" tabindex="0" role="button" aria-expanded="false">
+    <span class="dev-grip">&#8942;</span><span>Developer Console</span>
+    <span class="dev-chevron" id="dev-chevron">&#9650;</span>
+  </div>
+  <div class="dev-body hidden" id="dev-body">
+    <div class="dev-tabs-row">
+      <button class="dev-tab-btn active" data-dev="state">State</button>
+      <button class="dev-tab-btn" data-dev="cache">Cache</button>
+      <button class="dev-tab-btn" data-dev="events">Events</button>
+      <button class="dev-tab-btn" data-dev="network">Network</button>
+    </div>
+    <div class="dev-panels">
+      <div class="dev-panel-tab active" id="dev-p-state"><button id="btn-reset-state" class="dev-btn">Reset State</button><pre id="dev-state-json" class="dev-json">{}</pre></div>
+      <div class="dev-panel-tab" id="dev-p-cache"><div id="dev-cache-list" class="dev-cache-list"></div></div>
+      <div class="dev-panel-tab" id="dev-p-events">
+        <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+          <button class="dev-filter active" data-ef="all">All</button>
+          <button class="dev-filter" data-ef="nav">Nav</button>
+          <button class="dev-filter" data-ef="bookmark">Bookmark</button>
+          <button class="dev-filter" data-ef="region">Region</button>
+          <button class="dev-filter" data-ef="modal">Modal</button>
+          <button id="btn-clear-events" class="dev-btn" style="margin-left:auto">Clear</button>
+        </div>
+        <div id="dev-event-log" class="dev-event-log"></div>
+      </div>
+      <div class="dev-panel-tab" id="dev-p-network">
+        <div class="dev-net-row"><span>Latency</span><div class="dev-btns-row"><button class="dev-net-btn active" data-lat="0">Fast</button><button class="dev-net-btn" data-lat="1200">Slow</button><button class="dev-net-btn" data-lat="-1">Offline</button></div></div>
+        <div class="dev-net-row"><span>Error Rate</span><input type="range" id="err-rate" min="0" max="100" value="0"><span id="err-rate-val">0%</span></div>
+        <div class="dev-net-row"><span>Force State</span><div class="dev-btns-row"><button id="sim-loading" class="dev-net-btn">Loading</button><button id="sim-empty" class="dev-net-btn">Empty</button><button id="sim-error" class="dev-net-btn">Error</button><button id="sim-success" class="dev-net-btn">Success</button></div></div>
+        <div class="dev-net-row"><span>Auth</span><div class="dev-btns-row"><button id="sim-login" class="dev-net-btn">Login</button><button id="sim-logout" class="dev-net-btn">Logout</button></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="translation.js?v=24"></script>
+<script src="app.js?v=24"></script>
+</body>
+</html>
