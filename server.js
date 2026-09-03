@@ -5,7 +5,10 @@ const cors         = require('cors');
 const bcrypt       = require('bcryptjs');
 const jwt          = require('jsonwebtoken');
 const rateLimit    = require('express-rate-limit');
-const { stmt }     = require('./db');
+const multer       = require('multer');
+const path         = require('path');
+const fs           = require('fs');
+const { stmt, db } = require('./db');
 const tmdb         = require('./tmdb');
 const guardian     = require('./guardian');
 
@@ -39,6 +42,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '50kb' }));
 app.use(express.static('.'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 /* ── Rate limiters ── */
 const authLimiter = rateLimit({
@@ -63,6 +67,34 @@ const reactionLimiter = rateLimit({
   message: { error: 'Too many requests.' },
   standardHeaders: true,
   legacyHeaders: false,
+});
+
+/* ── File Upload Config ── */
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename:    (req, file, cb) => {
+    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    cb(null, Date.now() + '_' + safe);
+  },
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.pdf', '.jpg', '.jpeg', '.png'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) cb(null, true);
+    else cb(new Error('Only PDF, JPG, PNG files allowed'));
+  },
+});
+
+const appLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: { error: 'Too many applications submitted. Please try again later.' },
 });
 
 /* ── Client-side routing ── */
@@ -327,6 +359,102 @@ app.get('/api/news/:id', async (req, res) => {
   const local = LOCAL_ARTICLES.find(a => a.id === id);
   if (local) return res.json({ success:true, source:'local', data:local });
   res.status(404).json({ error:'Article not found' });
+});
+
+/* ─────────────────────────────────────────────
+   APPLICATION ROUTES (Reporter / Studio)
+───────────────────────────────────────────── */
+
+// Submit application (reporter or studio)
+app.post('/api/apply', appLimiter, upload.single('document'), async (req, res) => {
+  const {
+    type, name, email, phone,
+    portfolio, company_name, company_reg,
+    website, industries, message,
+  } = req.body;
+
+  if (!type || !name || !email)
+    return res.status(400).json({ error: 'Name, email and application type are required' });
+  if (!['reporter', 'studio'].includes(type))
+    return res.status(400).json({ error: 'Invalid application type' });
+  if (typeof email !== 'string' || !email.includes('@'))
+    return res.status(400).json({ error: 'Invalid email address' });
+
+  // Check for duplicate pending application
+  const existing = stmt.getApplicationByEmail.get(email.toLowerCase());
+  if (existing && existing.status === 'pending')
+    return res.status(409).json({ error: 'You already have a pending application. Please wait for review.' });
+
+  const id = genId();
+  const docFilename = req.file ? req.file.filename : null;
+  const docPath     = req.file ? '/uploads/' + req.file.filename : null;
+
+  stmt.createApplication.run(
+    id, type,
+    name.slice(0, 100),
+    email.toLowerCase(),
+    phone || null,
+    portfolio || null,
+    company_name || null,
+    company_reg || null,
+    website || null,
+    industries || '[]',
+    message ? message.slice(0, 1000) : null,
+    docFilename,
+    docPath,
+  );
+
+  console.log(`📋 New ${type} application from ${name} <${email}>`);
+  res.status(201).json({
+    success: true,
+    message: 'Application submitted successfully! We will review it within 2-3 business days.',
+    applicationId: id,
+  });
+});
+
+// Get application status by email (public)
+app.get('/api/apply/status', async (req, res) => {
+  const email = (req.query.email || '').toLowerCase();
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  const app = stmt.getApplicationByEmail.get(email);
+  if (!app) return res.status(404).json({ error: 'No application found for this email' });
+  res.json({ success: true, data: { status: app.status, type: app.type, created_at: app.created_at, review_note: app.review_note } });
+});
+
+// ── ADMIN: list all applications ──
+app.get('/api/admin/applications', auth, (req, res) => {
+  if (!req.user || req.user.role !== 'admin')
+    return res.status(403).json({ error: 'Admin access required' });
+  const apps = stmt.getApplications.all();
+  res.json({ success: true, count: apps.length, data: apps });
+});
+
+// ── ADMIN: approve or reject application ──
+app.put('/api/admin/applications/:id', auth, async (req, res) => {
+  if (!req.user || req.user.role !== 'admin')
+    return res.status(403).json({ error: 'Admin access required' });
+
+  const { status, review_note } = req.body;
+  if (!['approved', 'rejected'].includes(status))
+    return res.status(400).json({ error: 'Status must be approved or rejected' });
+
+  const application = stmt.getApplicationById.get(req.params.id);
+  if (!application) return res.status(404).json({ error: 'Application not found' });
+
+  stmt.updateApplicationStatus.run(status, req.email, review_note || '', req.params.id);
+
+  // If approved, update user role in users table
+  if (status === 'approved') {
+    const role = application.type === 'reporter' ? 'reporter' : 'studio';
+    // Find user by email and update role
+    const user = stmt.getUserByEmail.get(application.email);
+    if (user) {
+      db.prepare(`UPDATE users SET role=? WHERE email=?`).run(role, application.email);
+    }
+    console.log(`✅ ${application.type} application approved: ${application.name} <${application.email}>`);
+  }
+
+  res.json({ success: true, message: `Application ${status}`, applicationId: req.params.id });
 });
 
 /* ─────────────────────────────────────────────

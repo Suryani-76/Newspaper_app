@@ -14,6 +14,7 @@ db.exec(`
     email      TEXT UNIQUE NOT NULL,
     password   TEXT NOT NULL,
     avatar     TEXT DEFAULT 'U',
+    role       TEXT DEFAULT 'user',
     created_at TEXT DEFAULT (datetime('now'))
   );
 
@@ -48,6 +49,27 @@ db.exec(`
     type       TEXT NOT NULL,
     created_at TEXT DEFAULT (datetime('now')),
     PRIMARY KEY (article_id, email, type)
+  );
+
+  CREATE TABLE IF NOT EXISTS applications (
+    id           TEXT PRIMARY KEY,
+    type         TEXT NOT NULL,
+    status       TEXT DEFAULT 'pending',
+    name         TEXT NOT NULL,
+    email        TEXT NOT NULL,
+    phone        TEXT,
+    portfolio    TEXT,
+    company_name TEXT,
+    company_reg  TEXT,
+    website      TEXT,
+    industries   TEXT DEFAULT '[]',
+    message      TEXT,
+    doc_filename TEXT,
+    doc_path     TEXT,
+    reviewed_by  TEXT,
+    review_note  TEXT,
+    created_at   TEXT DEFAULT (datetime('now')),
+    updated_at   TEXT DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS comments (
@@ -98,6 +120,14 @@ const stmt = {
   addComment:     db.prepare('INSERT INTO comments (article_id,email,name,avatar,body) VALUES (?,?,?,?,?)'),
   getComments:    db.prepare('SELECT * FROM comments WHERE article_id=? ORDER BY created_at DESC'),
   deleteComment:  db.prepare('DELETE FROM comments WHERE id=? AND email=?'),
+
+  // Applications
+  createApplication: db.prepare(`INSERT INTO applications (id,type,name,email,phone,portfolio,company_name,company_reg,website,industries,message,doc_filename,doc_path) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`),
+  getApplications:   db.prepare('SELECT * FROM applications ORDER BY created_at DESC'),
+  getApplicationById: db.prepare('SELECT * FROM applications WHERE id = ?'),
+  updateApplicationStatus: db.prepare(`UPDATE applications SET status=?, reviewed_by=?, review_note=?, updated_at=datetime('now') WHERE id=?`),
+  getApplicationByEmail: db.prepare('SELECT * FROM applications WHERE email=? ORDER BY created_at DESC LIMIT 1'),
+  updateUserRole: db.prepare(`UPDATE users SET avatar=? WHERE email=?`),
 };
 
 module.exports = { db, stmt };

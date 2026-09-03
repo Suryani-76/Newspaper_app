@@ -1615,3 +1615,7 @@ body {
 /* Show more button */
 .card-show-more { background:none; border:none; color:var(--accent); font-size:.72rem; font-weight:700; cursor:pointer; padding:3px 0; margin-top:2px; display:block; }
 .card-show-more:hover { color:var(--text); }
+
+/* ── Join Us nav link ── */
+.nav-link-join { color: var(--accent) !important; font-weight: 700 !important; border: 1.5px solid rgba(232,25,44,.3) !important; border-radius: var(--r-sm) !important; padding: 5px 12px !important; }
+.nav-link-join:hover { background: rgba(232,25,44,.08) !important; border-color: var(--accent) !important; }
