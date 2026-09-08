@@ -6,7 +6,7 @@
   <title>CineWire — Global Movie News</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=30">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#e50914">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,6 +19,7 @@
   <meta property="og:image" content="https://placehold.co/1200x630/e50914/ffffff?text=CineWire">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="CineWire RSS Feed" href="/feed.xml">
 </head>
 <body>
 <div id="app-loader" class="app-loader">
@@ -53,7 +54,6 @@
         <a href="#" class="nav-link" data-section="trending" data-i18n="trending">Trending</a>
         <a href="#" class="nav-link" data-section="reviews" data-i18n="reviews">Reviews</a>
         <a href="#" class="nav-link" data-section="boxoffice" data-i18n="boxOffice">Box Office</a>
-        <a href="/join.html" class="nav-link nav-link-join">Join Us</a>
         <div class="nav-has-mega">
           <a href="#" class="nav-link">Categories <span class="nav-chevron">&#9660;</span></a>
           <div class="mega-menu">
@@ -115,6 +115,7 @@
       <button id="btn-theme" class="btn-theme" aria-label="Toggle theme">
         <span class="th-s">☀</span><div class="th-knob"></div><span class="th-d">☾</span>
       </button>
+      <a href="/join.html" class="btn-join-us">Join Us</a>
       <div class="hdr-action-grp">
         <button id="btn-user-menu" class="btn-avatar" aria-label="User menu"><span id="user-av">U</span></button>
         <div class="hdr-dropdown hidden" id="user-dropdown">
@@ -652,7 +653,7 @@
   </div>
 </div>
 
-<script src="translation.js?v=24"></script>
-<script src="app.js?v=24"></script>
+<script src="translation.js?v=29"></script>
+<script src="app.js?v=30"></script>
 </body>
 </html>

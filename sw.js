@@ -1,7 +1,7 @@
 'use strict';
 // Service worker v4 - clears all old caches
-const CACHE = 'cinewire-v4';
-const API_CACHE = 'cinewire-api-v4';
+const CACHE = 'cinewire-v8';
+const API_CACHE = 'cinewire-api-v7';
 
 self.addEventListener('install', e => {
   self.skipWaiting();

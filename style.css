@@ -8,6 +8,8 @@
   --bg-hover:  #e8ebf4;
   --bg-e:      #dde1ee;
   --accent:    #e8192c;
+  --red:       #e8192c;
+  --red-dim:   rgba(232,25,44,.1);
   --accent-2:  #ff6b35;
   --blue:      #3b6bdc;
   --green:     #18a96a;
@@ -467,14 +469,14 @@ ul { list-style:none; }
 .region-card { width:min(540px,95vw); max-height:85vh; display:flex; flex-direction:column; }
 .sec-label { font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.09em; color:var(--text-3); padding:0 0 7px; }
 .region-chips-wrap { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px; }
-.region-chip-btn { display:flex; align-items:center; gap:5px; background:var(--red-dim); border:1px solid rgba(229,9,20,.2); padding:5px 10px; border-radius:var(--r-full); font-size:.8rem; font-weight:600; cursor:pointer; transition:background .15s,border-color .15s; }
+.region-chip-btn { display:flex; align-items:center; gap:5px; background:var(--red-dim); border:1px solid rgba(229,9,20,.2); padding:5px 10px; border-radius:var(--r-full); font-size:.8rem; font-weight:600; cursor:pointer; color:var(--text); transition:background .15s,border-color .15s; }
 .region-chip-btn:hover { border-color:var(--red); }
 .region-chip-btn.active-region { background:var(--red); color:#fff; border-color:var(--red); }
 .region-all-wrap { flex:1; overflow-y:auto; }
-.region-country-row { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:var(--r-sm); cursor:pointer; font-size:.84rem; font-weight:500; transition:background .12s; }
+.region-country-row { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:var(--r-sm); cursor:pointer; font-size:.84rem; font-weight:500; color:var(--text); transition:background .12s; }
 .region-country-row:hover { background:var(--bg-hover); }
 .region-country-row.active { background:var(--red-dim); }
-.rcode { background:var(--bg-e); border:1px solid var(--border-s); padding:1px 5px; border-radius:3px; font-size:.62rem; font-weight:800; min-width:28px; text-align:center; }
+.rcode { background:var(--bg-e); border:1px solid var(--border-s); padding:1px 5px; border-radius:3px; font-size:.62rem; font-weight:800; min-width:28px; text-align:center; color:var(--text); }
 .rcheck { color:var(--red); font-weight:700; }
 
 /* ── Share Modal ── */
@@ -1619,3 +1621,82 @@ body {
 /* ── Join Us nav link ── */
 .nav-link-join { color: var(--accent) !important; font-weight: 700 !important; border: 1.5px solid rgba(232,25,44,.3) !important; border-radius: var(--r-sm) !important; padding: 5px 12px !important; }
 .nav-link-join:hover { background: rgba(232,25,44,.08) !important; border-color: var(--accent) !important; }
+
+/* ── Join Us header button ── */
+.btn-join-us {
+  display: inline-flex;
+  align-items: center;
+  background: var(--accent, #e8192c);
+  color: #fff !important;
+  font-size: .78rem;
+  font-weight: 800;
+  padding: 7px 16px;
+  border-radius: var(--r-sm, 10px);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .15s, transform .15s;
+  letter-spacing: .02em;
+}
+.btn-join-us:hover {
+  background: #c00018 !important;
+  transform: translateY(-1px);
+}
+@media (max-width: 767px) { .btn-join-us { display: none; } }
+
+
+/* ── Region modal — complete visibility fix (v9) ── */
+/* Modal card light/dark backgrounds */
+.modal-card { background: #fff !important; color: #111 !important; }
+[data-theme="dark"] .modal-card { background: var(--bg-card) !important; color: var(--text) !important; }
+.region-card .sec-label { color: #888 !important; }
+[data-theme="dark"] .region-card .sec-label { color: var(--text-3) !important; }
+
+/* Region search input */
+#region-search { background: #f4f4f6 !important; color: #111 !important; border-color: #ddd !important; }
+[data-theme="dark"] #region-search { background: var(--bg-e) !important; color: var(--text) !important; }
+
+/* Chip buttons — light mode */
+.region-chip-btn {
+  color: #111 !important;
+  background: rgba(232,25,44,.08) !important;
+  border-color: rgba(232,25,44,.25) !important;
+}
+.region-chip-btn .region-code {
+  color: #c8000a !important;
+  background: rgba(232,25,44,.12) !important;
+  border-color: rgba(232,25,44,.3) !important;
+}
+.region-chip-btn.active-region {
+  background: #e8192c !important;
+  color: #fff !important;
+  border-color: #e8192c !important;
+}
+.region-chip-btn.active-region .region-code {
+  background: rgba(255,255,255,.25) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* Chip buttons — dark mode */
+[data-theme="dark"] .region-chip-btn {
+  color: #eef0f8 !important;
+  background: rgba(232,25,44,.15) !important;
+  border-color: rgba(232,25,44,.3) !important;
+}
+[data-theme="dark"] .region-chip-btn .region-code {
+  color: #ff8080 !important;
+  background: rgba(232,25,44,.2) !important;
+}
+[data-theme="dark"] .region-chip-btn.active-region {
+  background: #e8192c !important;
+  color: #fff !important;
+}
+
+/* Country rows — light mode */
+.region-country-row { color: #111 !important; }
+.rcode { color: #c8000a !important; background: rgba(232,25,44,.08) !important; border-color: rgba(232,25,44,.2) !important; }
+
+/* Country rows — dark mode */
+[data-theme="dark"] .region-country-row { color: #eef0f8 !important; }
+[data-theme="dark"] .rcode { color: #ff8080 !important; background: rgba(232,25,44,.15) !important; }
