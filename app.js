@@ -655,14 +655,14 @@ function finishLogin() {
 /* ============================================================
    THEME
    ============================================================ */
-function applyTheme(t, showToast=false) {
+function applyTheme(t, manual=false) {
   STATE.theme = t;
   document.documentElement.setAttribute('data-theme', t);
+  if (manual) sessionStorage.setItem('cw_theme_manual', '1');
   save();
   log('nav','Theme: '+t);
-  if(showToast) toast(t === 'dark' ? '🌙 Dark mode on' : '☀️ Light mode on', 'info');
 }
-$('btn-theme').addEventListener('click', () => applyTheme(STATE.theme==='dark'?'light':'dark'));
+$('btn-theme').addEventListener('click', () => applyTheme(STATE.theme==='dark'?'light':'dark', true));
 
 /* ============================================================
    TAB CONFIG & FILTERING
@@ -1328,13 +1328,21 @@ function toggleBk(id) {
     toast(`Saved: "${a.title.slice(0,35)}…"`,'success');
     log('bookmark','Saved: '+id);
     // Sync to API
-    if(STATE.isLoggedIn) API.saveBookmark(id).catch(()=>{});
+    if(STATE.isLoggedIn) {
+      API.saveBookmark(id).catch(() => {
+        // Retry once on failure
+        setTimeout(() => API.saveBookmark(id).catch(()=>{}), 2000);
+      });
+    }
   } else {
     STATE.bookmarks.splice(idx,1);
     toast('Removed from saved','info');
     log('bookmark','Removed: '+id);
-    // Sync to API
-    if(STATE.isLoggedIn) API.removeBookmark(id).catch(()=>{});
+    if(STATE.isLoggedIn) {
+      API.removeBookmark(id).catch(() => {
+        setTimeout(() => API.removeBookmark(id).catch(()=>{}), 2000);
+      });
+    }
   }
   if(navigator.vibrate) navigator.vibrate(10);
   save(); syncUI(); refreshBkDrawer();
@@ -1670,6 +1678,8 @@ function buildComments(a) {
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
           <span style="font-size:.82rem;font-weight:700">${c.user}</span>
           ${c.verified?'<span style="background:var(--gold);color:#000;font-size:.58rem;font-weight:800;padding:1px 5px;border-radius:3px;text-transform:uppercase">Critic</span>':''}
+          ${c.role==='reporter'?'<span style="background:rgba(24,169,106,.12);color:#16a34a;border:1px solid rgba(24,169,106,.25);font-size:.58rem;font-weight:800;padding:1px 6px;border-radius:3px;text-transform:uppercase">Verified Reporter</span>':''}
+          ${c.role==='studio'?'<span style="background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.25);font-size:.58rem;font-weight:800;padding:1px 6px;border-radius:3px;text-transform:uppercase">Official Studio</span>':''}
           <span style="font-size:.7rem;color:var(--text-3)">${c.time}</span>
         </div>
         <div style="font-size:.84rem;color:var(--text-2);line-height:1.5;margin-bottom:7px">${c.text}</div>
@@ -1700,7 +1710,8 @@ $('comment-form').addEventListener('submit', e => {
   const a = ARTICLE_MAP[STATE.openArticle];
   if(!a) return;
   const name = STATE.isLoggedIn ? STATE.user?.name : 'Cinema Fan';
-  a.comments.unshift({id:'c'+Date.now(),user:name,avatar:(name[0]||'G').toUpperCase(),verified:false,text:txt,time:'Just now',likes:0,replies:[]});
+  const userRole = STATE.user?.role || 'user';
+  a.comments.unshift({id:'c'+Date.now(),user:name,avatar:(name[0]||'G').toUpperCase(),verified:false,role:userRole,text:txt,time:'Just now',likes:0,replies:[]});
   $('comment-input').value = ''; $('comment-form-btns').classList.add('hidden');
   buildComments(a); toast('Comment posted!','success'); log('modal','Comment posted');
 });
@@ -1908,9 +1919,31 @@ function renderRegionModal() {
   const q = $('region-search').value.trim().toLowerCase();
   $('region-your-list').innerHTML = STATE.followedRegions.map(code => {
     const c = COUNTRY_MAP[code]||{code,name:code};
-    return `<button class="region-chip-btn${pendingReg===code?' active-region':''}" data-code="${code}"><span class="region-code">${code}</span> ${c.name}</button>`;
+    const canRemove = code !== 'GL';
+    return `<button class="region-chip-btn${pendingReg===code?' active-region':''}" data-code="${code}">` +
+      `<span class="region-code">${code}</span> ${c.name}` +
+      (canRemove ? `<span class="region-chip-remove" data-remove="${code}" title="Remove ${c.name}" aria-label="Remove ${c.name}">&times;</span>` : '') +
+      `</button>`;
   }).join('');
-  $('region-your-list').querySelectorAll('.region-chip-btn').forEach(b => b.addEventListener('click', () => { pendingReg=b.dataset.code; renderRegionModal(); }));
+  $('region-your-list').querySelectorAll('.region-chip-btn').forEach(b => {
+    b.addEventListener('click', e => {
+      // If user clicked the × button, remove — don't select
+      if (e.target.closest('.region-chip-remove')) return;
+      pendingReg = b.dataset.code;
+      renderRegionModal();
+    });
+  });
+  $('region-your-list').querySelectorAll('.region-chip-remove').forEach(x => {
+    x.addEventListener('click', e => {
+      e.stopPropagation();
+      const code = x.dataset.remove;
+      STATE.followedRegions = STATE.followedRegions.filter(r => r !== code);
+      // If we removed the currently pending/active region, reset to GL
+      if (pendingReg === code) pendingReg = 'GL';
+      if (STATE.activeRegion === code) { STATE.activeRegion = 'GL'; save(); syncUI(); buildHero(); loadFeed(); }
+      renderRegionModal();
+    });
+  });
   const filtered = COUNTRIES.filter(c => !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
   $('region-all-list').innerHTML = filtered.map(c => `
     <div class="region-country-row${pendingReg===c.code?' active':''}" data-code="${c.code}" role="button" tabindex="0">
@@ -2298,6 +2331,33 @@ $('sim-logout').addEventListener('click',  () => $('btn-signout').click());
    ============================================================ */
 function init() {
   applyTheme(STATE.theme);
+
+  // ── Auto dark mode after 8pm ──
+  (function autoDarkMode() {
+    const hour = new Date().getHours();
+    // Only auto-switch if user hasn't manually set a preference this session
+    if (!sessionStorage.getItem('cw_theme_manual')) {
+      const shouldBeDark = hour >= 20 || hour < 6;
+      const currentIsDark = STATE.theme === 'dark';
+      if (shouldBeDark && !currentIsDark) {
+        applyTheme('dark');
+        toast('🌙 Switched to dark mode for evening reading', 'info');
+      } else if (!shouldBeDark && currentIsDark && localStorage.getItem('cw_theme') === null) {
+        // Only auto-switch to light if user never explicitly chose dark
+        applyTheme('light');
+      }
+    }
+    // Check every 15 minutes
+    setInterval(() => {
+      const h = new Date().getHours();
+      const manual = sessionStorage.getItem('cw_theme_manual');
+      if (!manual) {
+        const dark = h >= 20 || h < 6;
+        if (dark && STATE.theme !== 'dark') applyTheme('dark');
+        else if (!dark && STATE.theme === 'dark' && !localStorage.getItem('cw_theme')) applyTheme('light');
+      }
+    }, 15 * 60 * 1000);
+  })();
   syncUI();
 
   // ── Breaking News Banner ──
@@ -2332,7 +2392,12 @@ function init() {
       // Load bookmarks from API
       return API.getBookmarks();
     }).then(res => {
-      STATE.bookmarks = res.data.map(a => a.id);
+      // Merge server bookmarks with local ones (server wins)
+      const serverIds = res.data.map(a => a.id);
+      const localOnly = STATE.bookmarks.filter(id => !serverIds.includes(id));
+      STATE.bookmarks = [...new Set([...serverIds, ...localOnly])];
+      // Push any local-only bookmarks to server
+      localOnly.forEach(id => API.saveBookmark(id).catch(()=>{}));
       save(); syncUI(); refreshBkDrawer();
     }).catch(() => clearToken());
   }

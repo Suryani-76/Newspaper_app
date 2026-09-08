@@ -472,6 +472,17 @@ ul { list-style:none; }
 .region-chip-btn { display:flex; align-items:center; gap:5px; background:var(--red-dim); border:1px solid rgba(229,9,20,.2); padding:5px 10px; border-radius:var(--r-full); font-size:.8rem; font-weight:600; cursor:pointer; color:var(--text); transition:background .15s,border-color .15s; }
 .region-chip-btn:hover { border-color:var(--red); }
 .region-chip-btn.active-region { background:var(--red); color:#fff; border-color:var(--red); }
+.region-chip-remove {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; margin-left: 4px; border-radius: 50%;
+  font-size: .75rem; line-height: 1; font-weight: 900;
+  background: rgba(0,0,0,.15); color: inherit;
+  transition: background .12s, color .12s;
+  flex-shrink: 0;
+}
+.region-chip-remove:hover { background: rgba(0,0,0,.35); color: #fff; }
+.region-chip-btn.active-region .region-chip-remove { background: rgba(255,255,255,.25); color: #fff; }
+.region-chip-btn.active-region .region-chip-remove:hover { background: rgba(255,255,255,.5); }
 .region-all-wrap { flex:1; overflow-y:auto; }
 .region-country-row { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:var(--r-sm); cursor:pointer; font-size:.84rem; font-weight:500; color:var(--text); transition:background .12s; }
 .region-country-row:hover { background:var(--bg-hover); }
